@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Example page — embed demo</title>
+  <link rel="stylesheet" href="/static/widget/chat-widget.css" />
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, Segoe UI, Roboto, sans-serif;
+      color: #222;
+      background: #fafafa;
+    }
+    main {
+      padding: 2rem;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>This is your page</h1>
+  </main>
+
+  <div id="ixfeedback-widget-root" aria-label="Survey / feedback"></div>
+
+  <div id="ixchat-widget-root" class="chat-widget-root" data-open="false">
+    <button
+      type="button"
+      id="ixchat-widget-toggle"
+      class="chat-widget-fab"
+      aria-expanded="false"
+      aria-controls="ixchat-widget-panel"
+      title="Chat assistant"
+    >
+      <span aria-hidden="true">💬</span>
+      <span class="chat-widget-visually-hidden">Open or close chat</span>
+    </button>
+    <div
+      id="ixchat-widget-panel"
+      class="chat-widget-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ixchat-widget-title"
+      aria-hidden="true"
+    >
+      <div class="chat-widget-panel-inner">
+        <div class="chat-widget-header">
+          <div class="chat-widget-header-text">
+            <h2 id="ixchat-widget-title">Assistant</h2>
+          </div>
+          <div class="chat-widget-header-actions">
+            <button
+              type="button"
+              id="ixchat-widget-new-session"
+              class="chat-widget-trash"
+              title="New session"
+              aria-label="New session"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
+            <button type="button" id="ixchat-widget-close" class="chat-widget-close" aria-label="Close chat">×</button>
+          </div>
+        </div>
+        <div id="ixchat-messages" class="ixchat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+        <form id="ixchat-form" class="chat-widget-composer" autocomplete="off">
+          <label for="ixchat-input" class="chat-widget-visually-hidden">Message</label>
+          <textarea id="ixchat-input" name="message" rows="1" placeholder="Your message…" maxlength="500"></textarea>
+          <button type="submit" class="ixchat-send" id="ixchat-send">Send</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.CHAT_API_URL = "/agent/prompt";
+    window.CHAT_WELCOME_TEXT = "Hello. How can I help you?";
+    window.FEEDBACK_PAGE_API_URL = "/agent/feedback-page";
+  </script>
+  <script src="/static/agent.js"></script>
+  <script src="/static/widget/chat-widget.js"></script>
+</body>
+</html>

@@ -33,6 +33,7 @@ uvicorn app.main:app --reload --port 7750
 - Demo: http://127.0.0.1:7750/
 
 - Full chat: http://127.0.0.1:7750/chat.htm
+- Minimal embed demo: http://127.0.0.1:7750/example.htm
 
 - Admin: http://127.0.0.1:7750/agent_admin/
 - Config editor: http://127.0.0.1:7750/admin/configuration.htm
@@ -79,7 +80,7 @@ One CSS/JS bundle for chat and page feedback (`feedback_page` scenario):
 
 <div id="ixfeedback-widget-root"></div>
 
-<!-- chat HTML: see static/index.html #ixchat-widget-root -->
+<!-- chat HTML: see static/index.htm #ixchat-widget-root -->
 
 <script>
 

@@ -72,6 +72,38 @@ body.landing {
 
 .landing-nav a:hover { color: #ff6b35; }
 
+.landing-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.landing-github {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #24292f !important;
+  text-decoration: none;
+  border: 1px solid #d0d7de;
+  background: #f6f8fa;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.landing-github:hover {
+  background: #fff;
+  border-color: #8c959f;
+  color: #ff6b35 !important;
+}
+
+.landing-github-icon {
+  flex-shrink: 0;
+}
+
 .landing-cta-header {
   background: #ff6b35;
   color: #fff !important;

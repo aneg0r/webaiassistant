@@ -55,7 +55,7 @@ if backoffice_dir.is_dir():
 
 @app.get("/")
 async def root():
-    index = static_dir / "index.html"
+    index = static_dir / "index.htm"
     if index.is_file():
         return FileResponse(index)
     return RedirectResponse(url="/chat.htm")
@@ -67,6 +67,14 @@ async def chat_page():
     if path.is_file():
         return FileResponse(path)
     raise FileNotFoundError("static/chat.htm missing")
+
+
+@app.get("/example.htm")
+async def example_page():
+    path = static_dir / "example.htm"
+    if path.is_file():
+        return FileResponse(path)
+    raise FileNotFoundError("static/example.htm missing")
 
 
 def _admin_page(name: str) -> FileResponse:
