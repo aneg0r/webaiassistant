@@ -184,9 +184,10 @@
   <script>
 (function () {
   const fetch = AdminAuth.fetch.bind(AdminAuth);
-  const API_FAQ = "/backoffice/faq";
-  const API_SCEN_LIST = "/backoffice/scenarii/list";
-  const API_SCEN_FILE = "/backoffice/scenarii/file";
+  const API_BASE = "/backoffice";
+  const API_FAQ = API_BASE + "/faq";
+  const API_SCEN_LIST = API_BASE + "/scenarii/list";
+  const API_SCEN_FILE = API_BASE + "/scenarii/file";
 
   let currentScenFile = null;
   let scenDirty = false;

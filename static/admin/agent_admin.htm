@@ -541,13 +541,15 @@
   <script src="/static/admin/admin-auth.js"></script>
   <script>
     const fetch = AdminAuth.fetch.bind(AdminAuth);
-    const API_LIST = "/backoffice/sessions/list";
-    const API_ARCHIVE = "/backoffice/sessions/archive";
-    const API_RECORDS_LIST = "/backoffice/records/list";
-    const API_RECORDS_FILE = "/backoffice/records/file";
+    const API_BASE = "/backoffice";
+    const API_LIST = API_BASE + "/sessions/list";
+    const API_ARCHIVE = API_BASE + "/sessions/archive";
+    const API_RECORDS_LIST = API_BASE + "/records/list";
+    const API_RECORDS_FILE = API_BASE + "/records/file";
+    const API_SESSION_FILE = API_BASE + "/sessions/file";
     const API_POLL = "/agent/prompt";
-    const API_HUMAN = "/backoffice/human";
-    const API_HUMAN_IN_CHARGE = "/backoffice/human-in-charge";
+    const API_HUMAN = API_BASE + "/human";
+    const API_HUMAN_IN_CHARGE = API_BASE + "/human-in-charge";
     const STORAGE_PRENOM = "agent_admin_prenom";
     const TAB_IDS = ["chat", "actions", "feedback", "surveys"];
     const TAB_LABELS = {
@@ -651,7 +653,7 @@
         const author = s.last_message_author ? String(s.last_message_author) : "—";
         const lastContentRaw = s.last_message_content != null ? String(s.last_message_content) : "";
         const lastContent = lastContentRaw || "—";
-        const hrefConv = "/backoffice/?file=" + encodeURIComponent(s.file);
+        const hrefConv = API_BASE + "/?file=" + encodeURIComponent(s.file);
         const archiveTitle = "Archiver ce fichier";
         const rowClasses = [
           s.client_online ? "row-online" : "",
@@ -737,7 +739,9 @@
     }
 
     function transcriptUrl() {
-      if (detailQueryFile) return API_POLL + "?file=" + encodeURIComponent(detailQueryFile);
+      if (detailQueryFile) {
+        return API_SESSION_FILE + "?file=" + encodeURIComponent(detailQueryFile);
+      }
       return API_POLL + "?sessionId=" + encodeURIComponent(detailQuerySession);
     }
 
@@ -815,7 +819,7 @@
         if (file) {
           metaHtml +=
             ' <span><a class="file-link" href="' +
-            esc("/backoffice/sessions/file?file=" + encodeURIComponent(file)) +
+            esc(API_SESSION_FILE + "?file=" + encodeURIComponent(file)) +
             '" target="_blank" rel="noopener">Ouvrir le JSON brut</a></span>';
         }
         detailMeta.innerHTML = metaHtml;
@@ -1035,7 +1039,8 @@
         }
         const raw = data.data != null ? data.data : data;
         const jsonLink =
-          "/backoffice/records/file?source=" +
+          API_RECORDS_FILE +
+          "?source=" +
           encodeURIComponent(source) +
           "&file=" +
           encodeURIComponent(file);
@@ -1074,7 +1079,7 @@
     function showDetail() {
       viewList.classList.add("hidden");
       viewDetail.classList.add("active");
-      document.getElementById("detail-back").href = "/backoffice/?tab=chat";
+      document.getElementById("detail-back").href = API_BASE + "/?tab=chat";
       loadConversation();
     }
 
