@@ -35,7 +35,7 @@ uvicorn app.main:app --reload --port 7750
 - Full chat: http://127.0.0.1:7750/chat.htm
 - Minimal embed demo: http://127.0.0.1:7750/example.htm
 
-- Admin: http://127.0.0.1:7750/agent_admin/
+- Admin: http://127.0.0.1:7750/backoffice/
 - Config editor: http://127.0.0.1:7750/admin/configuration.htm
 
 
@@ -128,29 +128,29 @@ Omit `#ixfeedback-widget-root` if you only need the chat. The feedback tab mount
 
 |--------|------|
 
-| GET | `/agent_admin/sessions/list` |
+| GET | `/backoffice/sessions/list` |
 
-| GET | `/agent_admin/sessions/file?file=` | Raw transcript JSON |
+| GET | `/backoffice/sessions/file?file=` | Raw transcript JSON |
 
-| POST | `/agent_admin/sessions/archive` `{ "file": "…json" }` |
+| POST | `/backoffice/sessions/archive` `{ "file": "…json" }` |
 
-| GET | `/agent_admin/records/list?source=` `actions` \| `feedback` \| `surveys` \| `feedback_agent` |
+| GET | `/backoffice/records/list?source=` `actions` \| `feedback` \| `surveys` \| `feedback_agent` |
 
-| GET | `/agent_admin/records/file?source=&file=` |
+| GET | `/backoffice/records/file?source=&file=` |
 
-| POST | `/agent_admin/human` |
+| POST | `/backoffice/human` |
 
-| POST | `/agent_admin/human-in-charge` |
+| POST | `/backoffice/human-in-charge` |
 
-| GET | `/agent_admin/backoffice/faq` |
+| GET | `/backoffice/faq` |
 
-| PUT | `/agent_admin/backoffice/faq` `{ "entries": [{ "question", "answer" }] }` |
+| PUT | `/backoffice/faq` `{ "entries": [{ "question", "answer" }] }` |
 
-| GET | `/agent_admin/backoffice/scenarii/list` |
+| GET | `/backoffice/scenarii/list` |
 
-| GET | `/agent_admin/backoffice/scenarii/file?file=` |
+| GET | `/backoffice/scenarii/file?file=` |
 
-| PUT | `/agent_admin/backoffice/scenarii/file?file=` `{ "content": "…" }` |
+| PUT | `/backoffice/scenarii/file?file=` `{ "content": "…" }` |
 
 
 
@@ -162,7 +162,7 @@ Three layers work together:
 
 
 
-1. **nginx** — HTTP Basic on `/agent_admin/`, `/admin/`, and `/agent_admin/*` (recommended). The browser sends `Authorization: Basic` on every request (`credentials: "same-origin"` in the admin UI).
+1. **nginx** — HTTP Basic on `/backoffice/`, `/admin/`, and `/backoffice/*` (recommended). The browser sends `Authorization: Basic` on every request (`credentials: "same-origin"` in the admin UI).
 
 2. **Application Basic** — `ADMIN_USER` and `ADMIN_PASSWORD` in `.env` (same credentials as nginx, or used without nginx).
 
@@ -170,7 +170,7 @@ Three layers work together:
 
 
 
-| `.env` | API `/agent_admin/*` | HTML `/agent_admin/`, `/admin/configuration.htm` |
+| `.env` | API `/backoffice/*` | HTML `/backoffice/`, `/admin/configuration.htm` |
 
 |--------|----------------------|-----------------------------------------------------|
 
@@ -194,7 +194,7 @@ Also restrict admin URLs by IP in nginx, for example:
 
 ```nginx
 
-location ~ ^/(agent_admin|admin)/ {
+location ~ ^/(backoffice/|admin/) {
 
     auth_basic "Admin";
 

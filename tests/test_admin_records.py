@@ -48,7 +48,7 @@ def test_records_list_actions(perimeter, isolated_storage, client) -> None:
         {"email": "a@b.com", "phone": "+331", "question": "Demo"},
         "sess-abc",
     )
-    r = client.get("/agent_admin/records/list?source=actions")
+    r = client.get("/backoffice/records/list?source=actions")
     assert r.status_code == 200
     data = r.json()
     assert data["source"] == "actions"
@@ -84,7 +84,7 @@ def test_records_file_feedback(perimeter, isolated_storage, client) -> None:
         session_id="sess-fb",
     )
     assert fname
-    r = client.get(f"/agent_admin/records/file?source=feedback&file={fname}")
+    r = client.get(f"/backoffice/records/file?source=feedback&file={fname}")
     assert r.status_code == 200
     body = r.json()
     assert body["file"] == fname
@@ -93,10 +93,10 @@ def test_records_file_feedback(perimeter, isolated_storage, client) -> None:
 
 
 def test_records_list_unknown_source(client) -> None:
-    r = client.get("/agent_admin/records/list?source=unknown")
+    r = client.get("/backoffice/records/list?source=unknown")
     assert r.status_code == 400
 
 
 def test_records_file_rejects_path_traversal(isolated_storage, client) -> None:
-    r = client.get("/agent_admin/records/file?source=actions&file=../session/x.json")
+    r = client.get("/backoffice/records/file?source=actions&file=../session/x.json")
     assert r.status_code == 400

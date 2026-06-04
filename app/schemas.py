@@ -42,7 +42,7 @@ class GeminiPromptBody(BaseModel):
 
 
 class HumanReplyBody(BaseModel):
-    """POST /agent_admin/human — operator reply inserted into transcript."""
+    """POST /backoffice/human — operator reply inserted into transcript."""
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -62,7 +62,7 @@ class HumanReplyBody(BaseModel):
 
 
 class HumanInChargeBody(BaseModel):
-    """POST /agent_admin/human-in-charge — toggle human takeover."""
+    """POST /backoffice/human-in-charge — toggle human takeover."""
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -78,7 +78,7 @@ class HumanInChargeBody(BaseModel):
 
 
 class ArchiveSessionBody(BaseModel):
-    """POST /agent_admin/sessions/archive."""
+    """POST /backoffice/sessions/archive."""
 
     file: str = Field(..., min_length=1)
 

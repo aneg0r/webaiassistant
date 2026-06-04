@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from app import backoffice_store
 from app.auth import require_admin
 
-router = APIRouter(prefix="/agent_admin/backoffice", tags=["backoffice-config"])
+router = APIRouter(prefix="/backoffice", tags=["backoffice-config"])
 
 
 def _admin_dep(request: Request) -> None:

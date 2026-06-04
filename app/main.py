@@ -44,14 +44,6 @@ admin_static_dir = static_dir / "admin"
 if static_dir.is_dir():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
-backoffice_dir = config.BACKOFFICE_DIR
-if backoffice_dir.is_dir():
-    app.mount(
-        "/backoffice",
-        StaticFiles(directory=str(backoffice_dir)),
-        name="backoffice",
-    )
-
 
 @app.get("/")
 async def root():
@@ -84,15 +76,29 @@ def _admin_page(name: str) -> FileResponse:
     raise FileNotFoundError(f"static/admin/{name} missing")
 
 
-@app.get("/agent_admin/")
-async def agent_admin_page(request: Request):
+@app.get("/backoffice/")
+async def backoffice_admin_page(request: Request):
     require_admin(request, for_html=True)
     return _admin_page("agent_admin.htm")
 
 
+@app.get("/agent_admin/")
+async def agent_admin_legacy_redirect():
+    return RedirectResponse(url="/backoffice/", status_code=307)
+
+
 @app.get("/agent_admin.htm")
-async def agent_admin_redirect():
-    return RedirectResponse(url="/agent_admin/", status_code=307)
+async def agent_admin_htm_redirect():
+    return RedirectResponse(url="/backoffice/", status_code=307)
+
+
+backoffice_dir = config.BACKOFFICE_DIR
+if backoffice_dir.is_dir():
+    app.mount(
+        "/backoffice",
+        StaticFiles(directory=str(backoffice_dir)),
+        name="backoffice",
+    )
 
 
 @app.get("/admin/configuration.htm")

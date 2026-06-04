@@ -124,7 +124,7 @@
 <body>
   <div class="wrap">
     <nav class="nav">
-      <a href="/agent_admin/">← Sessions admin</a>
+      <a href="/backoffice/">← Sessions admin</a>
       · <a href="/">Accueil</a>
     </nav>
     <h1>Configuration agent</h1>
@@ -184,9 +184,9 @@
   <script>
 (function () {
   const fetch = AdminAuth.fetch.bind(AdminAuth);
-  const API_FAQ = "/agent_admin/backoffice/faq";
-  const API_SCEN_LIST = "/agent_admin/backoffice/scenarii/list";
-  const API_SCEN_FILE = "/agent_admin/backoffice/scenarii/file";
+  const API_FAQ = "/backoffice/faq";
+  const API_SCEN_LIST = "/backoffice/scenarii/list";
+  const API_SCEN_FILE = "/backoffice/scenarii/file";
 
   let currentScenFile = null;
   let scenDirty = false;

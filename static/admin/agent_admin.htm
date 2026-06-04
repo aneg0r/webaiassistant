@@ -506,7 +506,7 @@
 
     <div id="view-detail">
       <div class="detail-top">
-        <a class="muted-link" href="/agent_admin/" id="detail-back">← Retour à la liste</a>
+        <a class="muted-link" href="/backoffice/" id="detail-back">← Retour à la liste</a>
         <div class="panel-heading-row">
           <h1 id="detail-title">Conversation</h1>
           <div class="admin-prenom-bar">
@@ -541,13 +541,13 @@
   <script src="/static/admin/admin-auth.js"></script>
   <script>
     const fetch = AdminAuth.fetch.bind(AdminAuth);
-    const API_LIST = "/agent_admin/sessions/list";
-    const API_ARCHIVE = "/agent_admin/sessions/archive";
-    const API_RECORDS_LIST = "/agent_admin/records/list";
-    const API_RECORDS_FILE = "/agent_admin/records/file";
+    const API_LIST = "/backoffice/sessions/list";
+    const API_ARCHIVE = "/backoffice/sessions/archive";
+    const API_RECORDS_LIST = "/backoffice/records/list";
+    const API_RECORDS_FILE = "/backoffice/records/file";
     const API_POLL = "/agent/prompt";
-    const API_HUMAN = "/agent_admin/human";
-    const API_HUMAN_IN_CHARGE = "/agent_admin/human-in-charge";
+    const API_HUMAN = "/backoffice/human";
+    const API_HUMAN_IN_CHARGE = "/backoffice/human-in-charge";
     const STORAGE_PRENOM = "agent_admin_prenom";
     const TAB_IDS = ["chat", "actions", "feedback", "surveys"];
     const TAB_LABELS = {
@@ -651,7 +651,7 @@
         const author = s.last_message_author ? String(s.last_message_author) : "—";
         const lastContentRaw = s.last_message_content != null ? String(s.last_message_content) : "";
         const lastContent = lastContentRaw || "—";
-        const hrefConv = "/agent_admin/?file=" + encodeURIComponent(s.file);
+        const hrefConv = "/backoffice/?file=" + encodeURIComponent(s.file);
         const archiveTitle = "Archiver ce fichier";
         const rowClasses = [
           s.client_online ? "row-online" : "",
@@ -815,7 +815,7 @@
         if (file) {
           metaHtml +=
             ' <span><a class="file-link" href="' +
-            esc("/agent_admin/sessions/file?file=" + encodeURIComponent(file)) +
+            esc("/backoffice/sessions/file?file=" + encodeURIComponent(file)) +
             '" target="_blank" rel="noopener">Ouvrir le JSON brut</a></span>';
         }
         detailMeta.innerHTML = metaHtml;
@@ -1035,7 +1035,7 @@
         }
         const raw = data.data != null ? data.data : data;
         const jsonLink =
-          "/agent_admin/records/file?source=" +
+          "/backoffice/records/file?source=" +
           encodeURIComponent(source) +
           "&file=" +
           encodeURIComponent(file);
@@ -1074,7 +1074,7 @@
     function showDetail() {
       viewList.classList.add("hidden");
       viewDetail.classList.add("active");
-      document.getElementById("detail-back").href = "/agent_admin/?tab=chat";
+      document.getElementById("detail-back").href = "/backoffice/?tab=chat";
       loadConversation();
     }
 

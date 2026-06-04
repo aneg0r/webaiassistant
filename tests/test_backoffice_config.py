@@ -65,12 +65,12 @@ def test_scenario_path_traversal(backoffice_dirs) -> None:
 
 
 def test_api_faq_roundtrip(backoffice_dirs, client) -> None:
-    r = client.get("/agent_admin/backoffice/faq")
+    r = client.get("/backoffice/faq")
     assert r.status_code == 200
     assert r.json()["entries"][0]["question"] == "Q1"
 
     r = client.put(
-        "/agent_admin/backoffice/faq",
+        "/backoffice/faq",
         json={"entries": [{"question": "Q2", "answer": "A2"}]},
     )
     assert r.status_code == 200
@@ -78,16 +78,16 @@ def test_api_faq_roundtrip(backoffice_dirs, client) -> None:
 
 
 def test_api_scenario_roundtrip(backoffice_dirs, client) -> None:
-    r = client.get("/agent_admin/backoffice/scenarii/list")
+    r = client.get("/backoffice/scenarii/list")
     assert r.status_code == 200
     assert "test_scenario.md" in r.json()["files"]
 
-    r = client.get("/agent_admin/backoffice/scenarii/file?file=test_scenario.md")
+    r = client.get("/backoffice/scenarii/file?file=test_scenario.md")
     assert r.status_code == 200
     assert "# Test" in r.json()["content"]
 
     r = client.put(
-        "/agent_admin/backoffice/scenarii/file?file=test_scenario.md",
+        "/backoffice/scenarii/file?file=test_scenario.md",
         json={"content": "# Updated\n"},
     )
     assert r.status_code == 200

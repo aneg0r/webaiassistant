@@ -1,4 +1,4 @@
-"""Admin routes under /agent_admin/."""
+"""Admin routes under /backoffice/."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from app.transcripts import (
     set_human_in_charge_for_transcript,
 )
 
-router = APIRouter(prefix="/agent_admin", tags=["admin"])
+router = APIRouter(prefix="/backoffice", tags=["admin"])
 
 
 def _admin_dep(request: Request) -> None:
