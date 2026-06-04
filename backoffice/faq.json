@@ -1,0 +1,22 @@
+[
+  {
+    "question": "Êtes-vous un humain ?",
+    "answer": "Je suis un agent virtuel, mais je peux transférer la conversation à un humain au besoin."
+  },
+  {
+    "question": "Est-il possible de rafraîchir l'image toutes les 5 minutes ?",
+    "answer": "Oui, au détriment de la batterie. Il est préférable de laisser l'appareil branché. Avec la durée d'une heure par défaut, l'autonomie est d'environ 2 mois."
+  },
+  {
+    "question": "L'appareil est-il étanche ?",
+    "answer": "Non, pas du tout. Il contient par ailleurs une batterie lithium : elle craint l'eau. L'appareil est certifié CE et présente une coque métallique, mais il faut garder des précautions."
+  },
+  {
+    "question": "L'appareil est-il lumineux la nuit ?",
+    "answer": "Non, justement : il utilise la lumière ambiante. Il ne pourrait pas tenir plusieurs mois sur batterie s'il était rétroéclairé."
+  },
+  {
+    "question": "Puis-je changer la fréquence des phrases ?",
+    "answer": "Pas encore, mais cela est prévu dans le développement. Cependant, cela pourra impacter l'autonomie de la batterie. Avec la durée d'une heure par défaut, l'autonomie est d'environ 2 mois. Pour une fréquence plus élevée, inférieure à 30min, il est préférable de laisser l'appareil branché."
+  }
+]

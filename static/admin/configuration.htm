@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configuration agent — backoffice</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, Segoe UI, Roboto, sans-serif;
+      margin: 0;
+      background: #1a1d23;
+      color: #e8eaed;
+      min-height: 100vh;
+      line-height: 1.45;
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 20px 16px 40px; }
+    h1 { font-size: 1.35rem; font-weight: 600; margin: 0 0 6px; }
+    .sub { font-size: 13px; color: #9aa0a6; margin-bottom: 18px; }
+    .nav { margin-bottom: 20px; font-size: 14px; }
+    .nav a { color: #8ab4f8; text-decoration: none; }
+    .nav a:hover { text-decoration: underline; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tabs button {
+      background: #2d3139;
+      color: #bdc1c6;
+      border: 1px solid #3c4043;
+      border-radius: 8px 8px 0 0;
+      padding: 10px 18px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .tabs button.active {
+      background: #252830;
+      color: #e8eaed;
+      border-bottom-color: #252830;
+      font-weight: 600;
+    }
+    .panel {
+      display: none;
+      background: #252830;
+      border: 1px solid #3c4043;
+      border-radius: 0 10px 10px 10px;
+      padding: 16px;
+    }
+    .panel.active { display: block; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; align-items: center; }
+    button {
+      background: #3c4043;
+      color: #e8eaed;
+      border: 1px solid #5f6368;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover { background: #4a4d51; }
+    button.primary { background: #1a73e8; border-color: #1a73e8; }
+    button.primary:hover { background: #1967d2; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status { font-size: 13px; color: #9aa0a6; min-height: 1.2em; }
+    .status.ok { color: #81c995; }
+    .status.err { color: #f28b82; }
+    .err-box {
+      background: rgba(234, 67, 53, 0.12);
+      border: 1px solid rgba(234, 67, 53, 0.4);
+      color: #f28b82;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid #3c4043;
+      vertical-align: top;
+    }
+    th {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #9aa0a6;
+      background: #2d3139;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      background: #1a1d23;
+      color: #e8eaed;
+      border: 1px solid #5f6368;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+    textarea { min-height: 420px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; line-height: 1.4; resize: vertical; }
+    .scen-layout { display: grid; grid-template-columns: 220px 1fr; gap: 16px; min-height: 480px; }
+    @media (max-width: 700px) { .scen-layout { grid-template-columns: 1fr; } }
+    .file-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 480px;
+      overflow-y: auto;
+      border: 1px solid #3c4043;
+      border-radius: 8px;
+      background: #1a1d23;
+    }
+    .file-list li button {
+      width: 100%;
+      text-align: left;
+      border: none;
+      border-radius: 0;
+      border-bottom: 1px solid #3c4043;
+      background: transparent;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 12px;
+    }
+    .file-list li button:hover { background: rgba(255,255,255,0.05); }
+    .file-list li button.active { background: rgba(26, 115, 232, 0.2); color: #8ab4f8; }
+    .muted { color: #9aa0a6; font-size: 13px; }
+    code { font-size: 12px; background: #1a1d23; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav">
+      <a href="/agent_admin/">← Sessions admin</a>
+      · <a href="/">Accueil</a>
+    </nav>
+    <h1>Configuration agent</h1>
+    <p class="sub">
+      Édition de <code>backoffice/faq.json</code> et <code>backoffice/scenarii/*.md</code>.
+      Les changements sont pris en compte au prochain message (cache invalidé à l’enregistrement).
+    </p>
+    <div id="auth-warn" class="err-box" style="display:none;"></div>
+
+    <div class="tabs" role="tablist">
+      <button type="button" id="tab-faq" class="active" role="tab" aria-selected="true">FAQ</button>
+      <button type="button" id="tab-scen" role="tab" aria-selected="false">Scénarios</button>
+    </div>
+
+    <section id="panel-faq" class="panel active" role="tabpanel">
+      <div class="toolbar">
+        <button type="button" id="faq-add">Ajouter une entrée</button>
+        <button type="button" id="faq-reload">Recharger</button>
+        <button type="button" id="faq-save" class="primary">Enregistrer FAQ</button>
+        <span id="faq-status" class="status"></span>
+      </div>
+      <div class="table-wrap" style="overflow-x:auto;border:1px solid #3c4043;border-radius:8px;">
+        <table id="faq-table">
+          <thead>
+            <tr>
+              <th style="width:36%">Question</th>
+              <th>Réponse</th>
+              <th style="width:72px"></th>
+            </tr>
+          </thead>
+          <tbody id="faq-body"></tbody>
+        </table>
+      </div>
+      <p class="muted" style="margin-top:12px;">Format enregistré : tableau JSON <code>[{ "question", "answer" }]</code></p>
+    </section>
+
+    <section id="panel-scen" class="panel" role="tabpanel">
+      <div class="toolbar">
+        <button type="button" id="scen-reload-list">Rafraîchir la liste</button>
+        <button type="button" id="scen-save" class="primary" disabled>Enregistrer le fichier</button>
+        <span id="scen-status" class="status"></span>
+      </div>
+      <div class="scen-layout">
+        <div>
+          <p class="muted" style="margin:0 0 8px;">Fichiers</p>
+          <ul id="scen-files" class="file-list"></ul>
+        </div>
+        <div>
+          <p class="muted" style="margin:0 0 8px;">Contenu — <strong id="scen-current">(aucun)</strong></p>
+          <textarea id="scen-editor" placeholder="Sélectionnez un fichier…" disabled></textarea>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/static/admin/admin-auth.js"></script>
+  <script>
+(function () {
+  const fetch = AdminAuth.fetch.bind(AdminAuth);
+  const API_FAQ = "/agent_admin/backoffice/faq";
+  const API_SCEN_LIST = "/agent_admin/backoffice/scenarii/list";
+  const API_SCEN_FILE = "/agent_admin/backoffice/scenarii/file";
+
+  let currentScenFile = null;
+  let scenDirty = false;
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function setStatus(el, text, kind) {
+    el.textContent = text || "";
+    el.className = "status" + (kind ? " " + kind : "");
+  }
+
+  async function apiFetch(url, options) {
+    const opts = Object.assign({ credentials: "same-origin" }, options || {});
+    const r = await fetch(url, opts);
+    let data = {};
+    try {
+      data = await r.json();
+    } catch (_) {}
+    if (!r.ok) {
+      const detail = data.detail != null ? data.detail : "Erreur " + r.status;
+      const msg = typeof detail === "string" ? detail : JSON.stringify(detail);
+      if (r.status === 401) {
+        const w = document.getElementById("auth-warn");
+        w.style.display = "block";
+        w.textContent =
+          "Non autorisé (401). Vérifiez le login Basic (nginx) et le token ADMIN_TOKEN (.env), ou restreignez par IP.";
+      }
+      throw new Error(msg);
+    }
+    return data;
+  }
+
+  function switchTab(which) {
+    const faq = which === "faq";
+    document.getElementById("tab-faq").classList.toggle("active", faq);
+    document.getElementById("tab-scen").classList.toggle("active", !faq);
+    document.getElementById("tab-faq").setAttribute("aria-selected", faq ? "true" : "false");
+    document.getElementById("tab-scen").setAttribute("aria-selected", faq ? "false" : "true");
+    document.getElementById("panel-faq").classList.toggle("active", faq);
+    document.getElementById("panel-scen").classList.toggle("active", !faq);
+    if (!faq && !document.getElementById("scen-files").children.length) {
+      loadScenariiList();
+    }
+  }
+
+  document.getElementById("tab-faq").addEventListener("click", function () { switchTab("faq"); });
+  document.getElementById("tab-scen").addEventListener("click", function () { switchTab("scen"); });
+
+  function faqRow(entry, index) {
+    const tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td><input type="text" data-field="question" value="' + esc(entry.question || "") + '" /></td>' +
+      '<td><input type="text" data-field="answer" value="' + esc(entry.answer || "") + '" /></td>' +
+      '<td><button type="button" data-remove="' + index + '">Suppr.</button></td>';
+    tr.querySelector("[data-remove]").addEventListener("click", function () {
+      tr.remove();
+    });
+    return tr;
+  }
+
+  function collectFaqEntries() {
+    const rows = document.querySelectorAll("#faq-body tr");
+    const entries = [];
+    rows.forEach(function (tr) {
+      const q = tr.querySelector('[data-field="question"]').value.trim();
+      const a = tr.querySelector('[data-field="answer"]').value.trim();
+      if (!q && !a) return;
+      entries.push({ question: q, answer: a });
+    });
+    return entries;
+  }
+
+  function renderFaq(entries) {
+    const body = document.getElementById("faq-body");
+    body.innerHTML = "";
+    (entries || []).forEach(function (e, i) {
+      body.appendChild(faqRow(e, i));
+    });
+  }
+
+  async function loadFaq() {
+    const st = document.getElementById("faq-status");
+    setStatus(st, "Chargement…", "");
+    try {
+      const data = await apiFetch(API_FAQ);
+      renderFaq(data.entries || []);
+      setStatus(st, (data.entries || []).length + " entrée(s)", "ok");
+    } catch (e) {
+      setStatus(st, e.message, "err");
+    }
+  }
+
+  async function saveFaq() {
+    const st = document.getElementById("faq-status");
+    const btn = document.getElementById("faq-save");
+    btn.disabled = true;
+    setStatus(st, "Enregistrement…", "");
+    try {
+      const entries = collectFaqEntries();
+      const data = await apiFetch(API_FAQ, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entries: entries }),
+      });
+      renderFaq(data.entries || entries);
+      setStatus(st, "FAQ enregistrée.", "ok");
+    } catch (e) {
+      setStatus(st, e.message, "err");
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById("faq-add").addEventListener("click", function () {
+    document.getElementById("faq-body").appendChild(faqRow({ question: "", answer: "" }, 0));
+  });
+  document.getElementById("faq-reload").addEventListener("click", loadFaq);
+  document.getElementById("faq-save").addEventListener("click", saveFaq);
+
+  async function loadScenariiList() {
+    const st = document.getElementById("scen-status");
+    const ul = document.getElementById("scen-files");
+    setStatus(st, "Liste…", "");
+    try {
+      const data = await apiFetch(API_SCEN_LIST);
+      const files = data.files || [];
+      ul.innerHTML = "";
+      if (!files.length) {
+        ul.innerHTML = '<li class="muted" style="padding:12px;">Aucun fichier .md</li>';
+        return;
+      }
+      files.forEach(function (name) {
+        const li = document.createElement("li");
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = name;
+        b.addEventListener("click", function () {
+          selectScenario(name, b);
+        });
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+      setStatus(st, files.length + " fichier(s)", "ok");
+      if (currentScenFile && files.indexOf(currentScenFile) >= 0) {
+        const btn = Array.prototype.find.call(
+          ul.querySelectorAll("button"),
+          function (x) { return x.textContent === currentScenFile; }
+        );
+        if (btn) btn.classList.add("active");
+      }
+    } catch (e) {
+      setStatus(st, e.message, "err");
+    }
+  }
+
+  async function selectScenario(name, btnEl) {
+    const st = document.getElementById("scen-status");
+    if (scenDirty && !confirm("Modifications non enregistrées. Continuer ?")) return;
+    document.querySelectorAll("#scen-files button").forEach(function (b) {
+      b.classList.remove("active");
+    });
+    if (btnEl) btnEl.classList.add("active");
+    currentScenFile = name;
+    document.getElementById("scen-current").textContent = name;
+    const editor = document.getElementById("scen-editor");
+    editor.disabled = true;
+    document.getElementById("scen-save").disabled = true;
+    setStatus(st, "Chargement…", "");
+    try {
+      const data = await apiFetch(
+        API_SCEN_FILE + "?file=" + encodeURIComponent(name)
+      );
+      editor.value = data.content || "";
+      editor.disabled = false;
+      document.getElementById("scen-save").disabled = false;
+      scenDirty = false;
+      setStatus(st, "", "");
+    } catch (e) {
+      setStatus(st, e.message, "err");
+      editor.value = "";
+    }
+  }
+
+  async function saveScenario() {
+    if (!currentScenFile) return;
+    const st = document.getElementById("scen-status");
+    const btn = document.getElementById("scen-save");
+    const editor = document.getElementById("scen-editor");
+    btn.disabled = true;
+    setStatus(st, "Enregistrement…", "");
+    try {
+      await apiFetch(API_SCEN_FILE + "?file=" + encodeURIComponent(currentScenFile), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editor.value }),
+      });
+      scenDirty = false;
+      setStatus(st, "Fichier enregistré.", "ok");
+    } catch (e) {
+      setStatus(st, e.message, "err");
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById("scen-editor").addEventListener("input", function () {
+    scenDirty = true;
+  });
+  document.getElementById("scen-reload-list").addEventListener("click", loadScenariiList);
+  document.getElementById("scen-save").addEventListener("click", saveScenario);
+
+  loadFaq();
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "product_type": "physical",
+  "features": {
+    "knowledge_search": true,
+    "troubleshooting": true,
+    "customer_service_returns": true,
+    "customer_service_order_handling": true,
+    "callback_request": true,
+    "issue_reporting": true,
+    "newsletter": false,
+    "survey": true,
+    "feedback_page": true,
+    "feedback_agent": true,
+    "human_escalation": true,
+    "wiki_in_prompt": false
+  }
+}

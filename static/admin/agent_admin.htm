@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sessions chat — admin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, Segoe UI, Roboto, sans-serif;
+      margin: 0;
+      background: #1a1d23;
+      color: #e8eaed;
+      min-height: 100vh;
+      line-height: 1.45;
+    }
+    .wrap {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 20px 16px 32px;
+    }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .sub {
+      font-size: 13px;
+      color: #9aa0a6;
+      margin-bottom: 20px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    button {
+      background: #3c4043;
+      color: #e8eaed;
+      border: 1px solid #5f6368;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover { background: #4a4d51; }
+    button.primary {
+      background: #1a73e8;
+      border-color: #1a73e8;
+    }
+    button.primary:hover { background: #1967d2; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 13px;
+      color: #bdc1c6;
+    }
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-red { background: #ea4335; box-shadow: 0 0 0 2px rgba(234, 67, 53, 0.25); }
+    .dot-orange { background: #f9ab00; box-shadow: 0 0 0 2px rgba(249, 171, 0, 0.25); }
+    .dot-green { background: #43a047; box-shadow: 0 0 0 2px rgba(67, 160, 71, 0.25); }
+    .err {
+      background: rgba(234, 67, 53, 0.12);
+      border: 1px solid rgba(234, 67, 53, 0.4);
+      color: #f28b82;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid #3c4043;
+      border-radius: 10px;
+      background: #252830;
+      width: 100%;
+    }
+    table {
+      width: 100%;
+      min-width: 1500px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid #3c4043;
+      vertical-align: middle;
+    }
+    th {
+      background: #2d3139;
+      color: #9aa0a6;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255, 255, 255, 0.03); }
+    tr.row-online td { font-weight: 700; }
+    tr.row-last-user td { color: #ff6b6b; }
+    tr.row-last-user td a { color: #ff6b6b !important; }
+    .flags {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .mono {
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .last-message-cell {
+      min-width: 280px;
+      max-width: 520px;
+    }
+    .last-author {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #9aa0a6;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+    .last-content {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    a.file-link {
+      color: #8ab4f8;
+      text-decoration: none;
+    }
+    a.file-link:hover { text-decoration: underline; }
+    a.muted-link {
+      color: #9aa0a6;
+      font-size: 13px;
+      text-decoration: none;
+    }
+    a.muted-link:hover { color: #bdc1c6; }
+    .muted { color: #9aa0a6; }
+    .loading { color: #9aa0a6; font-size: 14px; }
+    .archive-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: 8px;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    /* Vue conversation */
+    #view-detail {
+      display: none;
+      flex-direction: column;
+      min-height: calc(100vh - 56px);
+    }
+    #view-detail.active { display: flex; }
+    #view-list.hidden { display: none; }
+    .detail-top {
+      margin-bottom: 16px;
+    }
+    .detail-top h1 { margin-bottom: 8px; }
+    .detail-meta {
+      font-size: 13px;
+      color: #9aa0a6;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      align-items: center;
+    }
+    .detail-meta code { font-size: 12px; color: #bdc1c6; }
+    .conv-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 320px;
+      border: 1px solid #3c4043;
+      border-radius: 10px;
+      background: #252830;
+      overflow: hidden;
+    }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .msg {
+      max-width: 92%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .msg .msg-time {
+      font-size: 11px;
+      opacity: 0.75;
+      margin-top: 6px;
+    }
+    .msg-user {
+      align-self: flex-end;
+      background: #3949ab;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg-bot {
+      align-self: flex-start;
+      background: #3c4043;
+      color: #e8eaed;
+      border-bottom-left-radius: 4px;
+    }
+    .msg-human {
+      align-self: flex-start;
+      background: #1b3a2f;
+      color: #c8e6c9;
+      border-left: 3px solid #43a047;
+      border-bottom-left-radius: 4px;
+    }
+    .msg-human .human-badge {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #81c784;
+      margin-bottom: 6px;
+    }
+    .composer {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px 16px;
+      border-top: 1px solid #3c4043;
+      background: #2d3139;
+    }
+    .composer label {
+      font-size: 12px;
+      color: #9aa0a6;
+      font-weight: 500;
+    }
+    .composer textarea {
+      width: 100%;
+      min-height: 72px;
+      max-height: 200px;
+      resize: vertical;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 10px 12px;
+      border: 1px solid #5f6368;
+      border-radius: 8px;
+      background: #1a1d23;
+      color: #e8eaed;
+    }
+    .composer textarea:focus {
+      outline: none;
+      border-color: #8ab4f8;
+    }
+    .composer-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #5f6368;
+      font-size: 12px;
+    }
+    .status-pill.online {
+      border-color: #43a047;
+      color: #81c784;
+    }
+    .composer-hint {
+      font-size: 12px;
+      color: #9aa0a6;
+    }
+    .panel-heading-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px 20px;
+      margin-bottom: 6px;
+    }
+    .panel-heading-row h1 {
+      margin: 0;
+      flex: 1 1 auto;
+      min-width: min(100%, 280px);
+    }
+    .admin-prenom-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      margin-bottom: 0;
+      font-size: 14px;
+      flex: 0 0 auto;
+    }
+    .admin-prenom-bar label {
+      color: #9aa0a6;
+      font-weight: 500;
+    }
+    .admin-prenom-bar .admin-prenom-input {
+      min-width: 120px;
+      max-width: 200px;
+      padding: 6px 10px;
+      border: 1px solid #5f6368;
+      border-radius: 8px;
+      background: #1a1d23;
+      color: #e8eaed;
+      font-size: 14px;
+    }
+    .admin-prenom-bar .admin-prenom-input:focus {
+      outline: none;
+      border-color: #8ab4f8;
+    }
+    .admin-tabs-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px 16px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #3c4043;
+      padding-bottom: 12px;
+    }
+    .admin-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 0;
+      border-bottom: none;
+      padding-bottom: 0;
+      flex: 1 1 auto;
+    }
+    .admin-config-link {
+      color: #8ab4f8;
+      font-size: 14px;
+      text-decoration: none;
+      padding: 10px 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .admin-config-link:hover {
+      text-decoration: underline;
+    }
+    .admin-tabs button.tab {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px 8px 0 0;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #9aa0a6;
+    }
+    .admin-tabs button.tab:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: #e8eaed;
+    }
+    .admin-tabs button.tab.active {
+      background: #252830;
+      border-color: #3c4043;
+      border-bottom-color: #252830;
+      color: #8ab4f8;
+      margin-bottom: -1px;
+    }
+    .tab-panel.hidden { display: none; }
+    .record-detail {
+      margin-top: 18px;
+      border: 1px solid #3c4043;
+      border-radius: 10px;
+      background: #1a1d23;
+      padding: 14px 16px;
+      display: none;
+    }
+    .record-detail.open { display: block; }
+    .record-detail pre {
+      margin: 12px 0 0;
+      padding: 12px;
+      background: #252830;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .record-detail-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    tr.row-record-selected td { background: rgba(138, 180, 248, 0.08); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <datalist id="prenoms-suggestions">
+      <option value="Paul"></option>
+      <option value="Pierre"></option>
+      <option value="Anne"></option>
+    </datalist>
+    <div id="view-list">
+      <div class="admin-tabs-row">
+        <nav class="admin-tabs" id="admin-tabs" aria-label="Sections admin">
+          <button type="button" class="tab active" data-tab="chat">Chat</button>
+          <button type="button" class="tab" data-tab="actions">Actions</button>
+          <button type="button" class="tab" data-tab="feedback">Feedback</button>
+          <button type="button" class="tab" data-tab="surveys">Enquêtes</button>
+        </nav>
+        <a class="admin-config-link" href="/admin/configuration.htm">Configuration FAQ / scénarios</a>
+      </div>
+
+      <div id="panel-chat" class="tab-panel">
+        <div class="panel-heading-row">
+          <h1>Sessions de transcription (dossier <code>var/sessions/</code>)</h1>
+          <div class="admin-prenom-bar">
+            <label for="admin-prenom">Prénom (opérateur)</label>
+            <input
+              type="text"
+              id="admin-prenom"
+              class="admin-prenom-input"
+              list="prenoms-suggestions"
+              placeholder="Paul"
+              autocomplete="off"
+              maxlength="200"
+            />
+          </div>
+        </div>
+        <p class="sub">Cliquez sur un <strong>nom de fichier</strong> pour ouvrir la conversation et répondre en bas. Indicateurs : bascule <code>handoff_signal</code>.</p>
+        <div class="toolbar">
+          <button type="button" id="btn-refresh">Actualiser</button>
+          <div class="legend">
+            <span><span class="dot dot-red" aria-hidden="true"></span> human_requires_human</span>
+            <span><span class="dot dot-orange" aria-hidden="true"></span> agent_demande_humain</span>
+            <span><span class="dot dot-green" aria-hidden="true"></span> human_in_charge</span>
+          </div>
+        </div>
+        <div id="msg"></div>
+        <div id="content" class="loading">Chargement…</div>
+        <p class="sub list-filter-note">Les sessions de test dont le <strong>nom de fichier</strong> contient l’adresse IP <code>127.0.0.1</code> (localhost) ne sont pas affichées dans cette liste.</p>
+      </div>
+
+      <div id="panel-actions" class="tab-panel hidden">
+        <h1>Call to action (dossier <code>var/records/actions/</code>)</h1>
+        <p class="sub">Rappels, newsletter et autres actions enregistrées par l’agent.</p>
+        <div class="toolbar">
+          <button type="button" class="btn-tab-refresh" data-sources="actions">Actualiser</button>
+        </div>
+        <div class="tab-msg" data-panel="actions"></div>
+        <div class="tab-content loading" data-panel="actions">Chargement…</div>
+        <div class="record-detail" id="record-detail-actions" data-panel="actions"></div>
+      </div>
+
+      <div id="panel-feedback" class="tab-panel hidden">
+        <h1>Feedbacks (dossiers <code>var/records/feedback/</code> et <code>var/records/feedback_agent/</code>)</h1>
+        <p class="sub">Retours sur les pages et notation de l’agent conversationnel.</p>
+        <div class="toolbar">
+          <button type="button" class="btn-tab-refresh" data-sources="feedback,feedback_agent">Actualiser</button>
+        </div>
+        <div class="tab-msg" data-panel="feedback"></div>
+        <div class="tab-content loading" data-panel="feedback">Chargement…</div>
+        <div class="record-detail" id="record-detail-feedback" data-panel="feedback"></div>
+      </div>
+
+      <div id="panel-surveys" class="tab-panel hidden">
+        <h1>Enquêtes (dossier <code>var/records/surveys/</code>)</h1>
+        <p class="sub">Réponses aux sondages rapides proposés par le chat.</p>
+        <div class="toolbar">
+          <button type="button" class="btn-tab-refresh" data-sources="surveys">Actualiser</button>
+        </div>
+        <div class="tab-msg" data-panel="surveys"></div>
+        <div class="tab-content loading" data-panel="surveys">Chargement…</div>
+        <div class="record-detail" id="record-detail-surveys" data-panel="surveys"></div>
+      </div>
+    </div>
+
+    <div id="view-detail">
+      <div class="detail-top">
+        <a class="muted-link" href="/agent_admin/" id="detail-back">← Retour à la liste</a>
+        <div class="panel-heading-row">
+          <h1 id="detail-title">Conversation</h1>
+          <div class="admin-prenom-bar">
+            <label for="admin-prenom-detail">Prénom (opérateur)</label>
+            <input
+              type="text"
+              id="admin-prenom-detail"
+              class="admin-prenom-input"
+              list="prenoms-suggestions"
+              placeholder="Paul"
+              autocomplete="off"
+              maxlength="200"
+            />
+          </div>
+        </div>
+        <div class="detail-meta" id="detail-meta"></div>
+      </div>
+      <div class="conv-wrap">
+        <div id="messages"></div>
+        <div class="composer">
+          <label for="human-reply">Réponse humaine (visible côté <code>chat.htm</code> avec le badge Humain)</label>
+          <textarea id="human-reply" placeholder="Votre message au visiteur…" maxlength="8000"></textarea>
+          <div class="composer-actions">
+            <button type="button" class="primary" id="btn-send-human">Envoyer la réponse</button>
+            <button type="button" id="btn-reload-conv">Recharger</button>
+            <span class="composer-hint" id="send-status"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/static/admin/admin-auth.js"></script>
+  <script>
+    const fetch = AdminAuth.fetch.bind(AdminAuth);
+    const API_LIST = "/agent_admin/sessions/list";
+    const API_ARCHIVE = "/agent_admin/sessions/archive";
+    const API_RECORDS_LIST = "/agent_admin/records/list";
+    const API_RECORDS_FILE = "/agent_admin/records/file";
+    const API_POLL = "/agent/prompt";
+    const API_HUMAN = "/agent_admin/human";
+    const API_HUMAN_IN_CHARGE = "/agent_admin/human-in-charge";
+    const STORAGE_PRENOM = "agent_admin_prenom";
+    const TAB_IDS = ["chat", "actions", "feedback", "surveys"];
+    const TAB_LABELS = {
+      chat: "Chat",
+      actions: "Actions",
+      feedback: "Feedback",
+      surveys: "Enquêtes",
+    };
+    const RECORD_SOURCES_BY_TAB = {
+      actions: ["actions"],
+      feedback: ["feedback", "feedback_agent"],
+      surveys: ["surveys"],
+    };
+
+    const viewList = document.getElementById("view-list");
+    const viewDetail = document.getElementById("view-detail");
+    const messagesEl = document.getElementById("messages");
+    const detailMeta = document.getElementById("detail-meta");
+    const detailTitle = document.getElementById("detail-title");
+    const humanReply = document.getElementById("human-reply");
+    const btnSendHuman = document.getElementById("btn-send-human");
+    const btnReloadConv = document.getElementById("btn-reload-conv");
+    const sendStatus = document.getElementById("send-status");
+
+    let detailQueryFile = null;
+    let detailQuerySession = null;
+    let detailHumanInCharge = false;
+    let activeTab = "chat";
+    let selectedRecord = null;
+
+    function esc(s) {
+      if (s == null || s === "") return "—";
+      const t = document.createElement("div");
+      t.textContent = String(s);
+      return t.innerHTML;
+    }
+
+    function dot(className, title) {
+      return '<span class="dot ' + className + '" title="' + esc(title) + '" role="img" aria-label="' + esc(title) + '"></span>';
+    }
+
+    function isLocalhostSessionFilename(file) {
+      return String(file || "").includes("127.0.0.1");
+    }
+
+    function updateTabLabel(tabId, count) {
+      const btn = document.querySelector('#admin-tabs button.tab[data-tab="' + tabId + '"]');
+      if (!btn) return;
+      const label = TAB_LABELS[tabId] || tabId;
+      const n = Math.max(0, Number(count) || 0);
+      btn.textContent = label + " (" + n + ")";
+    }
+
+    async function countChatSessions() {
+      const r = await fetch(API_LIST, { credentials: "same-origin" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const data = await r.json();
+      return (Array.isArray(data.sessions) ? data.sessions : []).filter(function (s) {
+        return !isLocalhostSessionFilename(s && s.file);
+      }).length;
+    }
+
+    async function countRecordsForTab(tabId) {
+      const sources = RECORD_SOURCES_BY_TAB[tabId] || [];
+      if (!sources.length) return 0;
+      const batches = await Promise.all(sources.map(fetchRecordsForSource));
+      return batches.flat().length;
+    }
+
+    async function refreshAllTabCounts() {
+      const results = await Promise.allSettled([
+        countChatSessions(),
+        countRecordsForTab("actions"),
+        countRecordsForTab("feedback"),
+        countRecordsForTab("surveys"),
+      ]);
+      if (results[0].status === "fulfilled") updateTabLabel("chat", results[0].value);
+      if (results[1].status === "fulfilled") updateTabLabel("actions", results[1].value);
+      if (results[2].status === "fulfilled") updateTabLabel("feedback", results[2].value);
+      if (results[3].status === "fulfilled") updateTabLabel("surveys", results[3].value);
+    }
+
+    function renderRows(sessions) {
+      if (!sessions.length) {
+        return '<p class="muted">Aucun fichier de session trouvé (JSON de transcription dans <code>var/sessions/</code>).</p>';
+      }
+      let html = '<div class="table-wrap"><table><thead><tr>';
+      html += "<th>Signaux</th><th>Etat</th><th>En ligne</th><th>Dernier message</th><th>Session</th><th>Mise à jour</th><th>IP</th><th>Archiver</th>";
+      html += "</tr></thead><tbody>";
+      for (const s of sessions) {
+        const flags = [];
+        if (s.human_requires_human) flags.push(dot("dot-red", "human_requires_human"));
+        if (s.agent_demande_humain) flags.push(dot("dot-orange", "agent_demande_humain"));
+        if (s.human_in_charge) flags.push(dot("dot-green", "human_in_charge"));
+        const flagCell = flags.length ? '<span class="flags">' + flags.join("") + "</span>" : '<span class="muted">—</span>';
+        const stateCell = s.human_in_charge ? '<span class="status-pill">Humain actif</span>' : '<span class="muted">Agent</span>';
+        const onlineCell = s.client_online
+          ? '<span class="status-pill online">En ligne</span>'
+          : '<span class="muted">Hors ligne</span>';
+        const lastPoll = s.client_last_poll_at ? "<div class=\"muted\" style=\"font-size:11px;margin-top:4px;\">" + esc(s.client_last_poll_at) + "</div>" : "";
+        const author = s.last_message_author ? String(s.last_message_author) : "—";
+        const lastContentRaw = s.last_message_content != null ? String(s.last_message_content) : "";
+        const lastContent = lastContentRaw || "—";
+        const hrefConv = "/agent_admin/?file=" + encodeURIComponent(s.file);
+        const archiveTitle = "Archiver ce fichier";
+        const rowClasses = [
+          s.client_online ? "row-online" : "",
+          s.last_message_role === "user" ? "row-last-user" : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
+        html += "<tr" + (rowClasses ? ' class="' + rowClasses + '"' : "") + ">";
+        html += "<td>" + flagCell + "</td>";
+        html += "<td>" + stateCell + "</td>";
+        html += "<td>" + onlineCell + lastPoll + "</td>";
+        html += '<td class="last-message-cell"><a class="file-link" href="' + esc(hrefConv) + '" title="' + esc(lastContentRaw || "") + '"><div class="last-author">' + esc(author) + '</div><div class="last-content">' + esc(lastContent) + "</div></a></td>";
+        html += '<td class="mono">' + esc(s.sessionId) + "</td>";
+        html += "<td>" + esc(s.updated_at || s.started_at) + "</td>";
+        html += '<td class="mono">' + esc(s.client_ip) + "</td>";
+        html += '<td><button type="button" class="archive-btn" data-archive-file="' + esc(s.file) + '" title="' + esc(archiveTitle) + '" aria-label="' + esc(archiveTitle) + '">🗑️</button></td>';
+        html += "</tr>";
+      }
+      html += "</tbody></table></div>";
+      return html;
+    }
+
+    async function archiveSessionFile(file) {
+      const safeFile = (file || "").trim();
+      if (!safeFile) return;
+      const ok = window.confirm("Archiver la session " + safeFile + " ?");
+      if (!ok) return;
+      const msg = document.getElementById("msg");
+      try {
+        const r = await fetch(API_ARCHIVE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ file: safeFile }),
+        });
+        const data = await r.json().catch(function () {
+          return {};
+        });
+        if (!r.ok) {
+          const detail = data && data.detail != null ? data.detail : "Erreur " + r.status;
+          throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+        }
+        msg.innerHTML = "";
+        await loadList();
+      } catch (e) {
+        msg.innerHTML = '<div class="err">Archivage impossible : ' + esc(e && e.message ? e.message : String(e)) + "</div>";
+      }
+    }
+
+    async function loadList() {
+      const content = document.getElementById("content");
+      const msg = document.getElementById("msg");
+      msg.innerHTML = "";
+      content.className = "loading";
+      content.textContent = "Chargement…";
+      try {
+        const r = await fetch(API_LIST, { credentials: "same-origin" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const data = await r.json();
+        const sessions = (Array.isArray(data.sessions) ? data.sessions : []).filter(function (s) {
+          return !isLocalhostSessionFilename(s && s.file);
+        });
+        content.className = "";
+        content.innerHTML = renderRows(sessions);
+        updateTabLabel("chat", sessions.length);
+      } catch (e) {
+        content.className = "";
+        content.innerHTML = "";
+        msg.innerHTML =
+          '<div class="err">Impossible de charger la liste. Vérifiez que le serveur tourne et que l’URL <code>' +
+          esc(API_LIST) +
+          "</code> est accessible.</div>";
+      }
+    }
+
+    function parseDetailParams() {
+      const p = new URLSearchParams(window.location.search);
+      const file = p.get("file");
+      const session = p.get("session");
+      detailQueryFile = file && file.trim() ? file.trim() : null;
+      detailQuerySession = session && session.trim() ? session.trim() : null;
+      return !!(detailQueryFile || detailQuerySession);
+    }
+
+    function transcriptUrl() {
+      if (detailQueryFile) return API_POLL + "?file=" + encodeURIComponent(detailQueryFile);
+      return API_POLL + "?sessionId=" + encodeURIComponent(detailQuerySession);
+    }
+
+    function formatTime(iso) {
+      if (!iso) return "";
+      const d = Date.parse(iso);
+      if (isNaN(d)) return String(iso);
+      return new Date(d).toLocaleString();
+    }
+
+    function renderConversationMessages(messages) {
+      messagesEl.innerHTML = "";
+      if (!messages || !messages.length) {
+        messagesEl.innerHTML = '<p class="muted" style="margin:0;">Aucun message dans ce fichier.</p>';
+        return;
+      }
+      for (const m of messages) {
+        if (!m || typeof m.role !== "string") continue;
+        const role = m.role.toLowerCase();
+        const text = m.content != null ? String(m.content) : "";
+        const div = document.createElement("div");
+        const time = m.at ? formatTime(m.at) : "";
+        if (role === "user") {
+          div.className = "msg msg-user";
+          div.textContent = text;
+        } else if (role === "assistant") {
+          const fromHuman = m.from_human === true;
+          div.className = fromHuman ? "msg msg-human" : "msg msg-bot";
+          if (fromHuman) {
+            const badge = document.createElement("div");
+            badge.className = "human-badge";
+            const pn = m.prenom != null ? String(m.prenom).trim() : "";
+            badge.textContent = pn ? "Humain — " + pn : "Humain";
+            div.appendChild(badge);
+          }
+          const span = document.createElement("div");
+          span.textContent = text;
+          div.appendChild(span);
+        } else {
+          continue;
+        }
+        if (time) {
+          const t = document.createElement("div");
+          t.className = "msg-time";
+          t.textContent = time;
+          div.appendChild(t);
+        }
+        messagesEl.appendChild(div);
+      }
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    async function loadConversation() {
+      sendStatus.textContent = "";
+      try {
+        const r = await fetch(transcriptUrl(), { credentials: "same-origin" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const data = await r.json();
+        const file = data.file != null ? String(data.file) : detailQueryFile || "";
+        const sid = data.sessionId != null ? String(data.sessionId) : detailQuerySession || "";
+        detailHumanInCharge = data.human_in_charge === true;
+        detailTitle.textContent = file || "Conversation";
+        let metaHtml =
+          (file ? "<span>Fichier : <code>" + esc(file) + "</code></span>" : "") +
+          (sid ? "<span>Session : <code>" + esc(sid) + "</code></span>" : "") +
+          (data.updated_at ? "<span>Mise à jour : " + esc(String(data.updated_at)) + "</span>" : "") +
+          "<span>" +
+          (detailHumanInCharge
+            ? '<span class="status-pill"><span class="dot dot-green"></span>Human in charge: actif</span>'
+            : '<span class="status-pill">Human in charge: inactif</span>') +
+          "</span>" +
+          '<span><button type="button" id="btn-toggle-human">' +
+          (detailHumanInCharge ? "Redonner la main a l'agent" : "Passer en humain") +
+          "</button></span>";
+        if (file) {
+          metaHtml +=
+            ' <span><a class="file-link" href="' +
+            esc("/agent_admin/sessions/file?file=" + encodeURIComponent(file)) +
+            '" target="_blank" rel="noopener">Ouvrir le JSON brut</a></span>';
+        }
+        detailMeta.innerHTML = metaHtml;
+        const btnToggle = document.getElementById("btn-toggle-human");
+        if (btnToggle) {
+          btnToggle.addEventListener("click", toggleHumanInCharge);
+        }
+        const msgs = Array.isArray(data.messages) ? data.messages : [];
+        renderConversationMessages(msgs);
+      } catch (e) {
+        messagesEl.innerHTML =
+          '<p class="err" style="margin:0;">Impossible de charger la conversation.</p>';
+      }
+    }
+
+    async function sendHumanReply() {
+      const text = (humanReply.value || "").trim();
+      if (!text) {
+        sendStatus.textContent = "Saisissez un message.";
+        return;
+      }
+      btnSendHuman.disabled = true;
+      sendStatus.textContent = "Envoi…";
+      const body = { content: text };
+      if (detailQueryFile) body.file = detailQueryFile;
+      else body.sessionId = detailQuerySession;
+      const prenom = getAdminPrenom();
+      if (prenom) body.prenom = prenom;
+      try {
+        const r = await fetch(API_HUMAN, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify(body),
+        });
+        const data = await r.json().catch(function () {
+          return {};
+        });
+        if (!r.ok) {
+          const d = data.detail != null ? data.detail : "Erreur " + r.status;
+          throw new Error(typeof d === "string" ? d : JSON.stringify(d));
+        }
+        humanReply.value = "";
+        sendStatus.textContent = "Envoyé.";
+        detailHumanInCharge = true;
+        await loadConversation();
+      } catch (e) {
+        sendStatus.textContent = e && e.message ? e.message : String(e);
+      } finally {
+        btnSendHuman.disabled = false;
+      }
+    }
+
+    async function toggleHumanInCharge() {
+      sendStatus.textContent = "Mise a jour etat...";
+      const body = { active: !detailHumanInCharge };
+      if (detailQueryFile) body.file = detailQueryFile;
+      else body.sessionId = detailQuerySession;
+      try {
+        const r = await fetch(API_HUMAN_IN_CHARGE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify(body),
+        });
+        const data = await r.json().catch(function () {
+          return {};
+        });
+        if (!r.ok) {
+          const d = data.detail != null ? data.detail : "Erreur " + r.status;
+          throw new Error(typeof d === "string" ? d : JSON.stringify(d));
+        }
+        detailHumanInCharge = !!data.human_in_charge;
+        sendStatus.textContent = detailHumanInCharge
+          ? "Mode humain active."
+          : "Main rendue a l'agent.";
+        await loadConversation();
+      } catch (e) {
+        sendStatus.textContent = e && e.message ? e.message : String(e);
+      }
+    }
+
+    function tabFromUrl() {
+      const p = new URLSearchParams(window.location.search);
+      const t = (p.get("tab") || "chat").trim().toLowerCase();
+      return TAB_IDS.indexOf(t) >= 0 ? t : "chat";
+    }
+
+    function setTabInUrl(tab) {
+      const p = new URLSearchParams(window.location.search);
+      if (tab === "chat") p.delete("tab");
+      else p.set("tab", tab);
+      p.delete("record");
+      p.delete("source");
+      const q = p.toString();
+      const path = window.location.pathname + (q ? "?" + q : "");
+      window.history.replaceState(null, "", path);
+    }
+
+    function switchTab(tab, options) {
+      const opts = options || {};
+      if (TAB_IDS.indexOf(tab) < 0) tab = "chat";
+      activeTab = tab;
+      document.querySelectorAll("#admin-tabs .tab").forEach(function (btn) {
+        btn.classList.toggle("active", btn.getAttribute("data-tab") === tab);
+      });
+      TAB_IDS.forEach(function (id) {
+        const panel = document.getElementById("panel-" + id);
+        if (panel) panel.classList.toggle("hidden", id !== tab);
+      });
+      if (!opts.skipUrl) setTabInUrl(tab);
+      if (tab === "chat") loadList();
+      else loadRecordsTab(tab);
+    }
+
+    function renderRecordRows(records, tabId) {
+      if (!records.length) {
+        return '<p class="muted">Aucun enregistrement JSON dans ce dossier.</p>';
+      }
+      let html = '<div class="table-wrap"><table><thead><tr>';
+      html += "<th>Type</th><th>Résumé</th><th>Session</th><th>Date</th><th>Fichier</th>";
+      html += "</tr></thead><tbody>";
+      for (const r of records) {
+        const isSel =
+          selectedRecord &&
+          selectedRecord.tab === tabId &&
+          selectedRecord.source === r._source &&
+          selectedRecord.file === r.file;
+        html += '<tr class="record-row' + (isSel ? " row-record-selected" : "") + '" data-record-tab="' + esc(tabId) + '" data-record-source="' + esc(r._source) + '" data-record-file="' + esc(r.file) + '">';
+        html += "<td>" + esc(r.prefix || "—") + (r._source === "feedback_agent" ? ' <span class="muted">(agent)</span>' : "") + "</td>";
+        html += '<td class="last-message-cell"><div class="last-content">' + esc(r.summary || "—") + "</div></td>";
+        html += '<td class="mono">' + esc(r.session_id || "—") + "</td>";
+        html += "<td>" + esc(r.at || r.updated_at) + "</td>";
+        html += '<td class="mono"><a class="file-link record-file-link" href="#">' + esc(r.file) + "</a></td>";
+        html += "</tr>";
+      }
+      html += "</tbody></table></div>";
+      return html;
+    }
+
+    async function fetchRecordsForSource(source) {
+      const r = await fetch(API_RECORDS_LIST + "?source=" + encodeURIComponent(source), {
+        credentials: "same-origin",
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const data = await r.json();
+      const list = Array.isArray(data.records) ? data.records : [];
+      return list.map(function (row) {
+        return Object.assign({}, row, { _source: source });
+      });
+    }
+
+    async function loadRecordsTab(tabId) {
+      const content = document.querySelector('.tab-content[data-panel="' + tabId + '"]');
+      const msg = document.querySelector('.tab-msg[data-panel="' + tabId + '"]');
+      if (!content) return;
+      if (msg) msg.innerHTML = "";
+      content.className = "tab-content loading";
+      content.textContent = "Chargement…";
+      const sources = RECORD_SOURCES_BY_TAB[tabId] || [];
+      try {
+        const batches = await Promise.all(sources.map(fetchRecordsForSource));
+        const merged = batches
+          .flat()
+          .sort(function (a, b) {
+            const ta = Date.parse(a.at || a.updated_at || "") || 0;
+            const tb = Date.parse(b.at || b.updated_at || "") || 0;
+            return tb - ta;
+          });
+        content.className = "tab-content";
+        content.innerHTML = renderRecordRows(merged, tabId);
+        updateTabLabel(tabId, merged.length);
+        if (selectedRecord && selectedRecord.tab === tabId) {
+          await showRecordDetail(selectedRecord.source, selectedRecord.file, tabId, { skipScroll: true });
+        }
+      } catch (e) {
+        content.className = "tab-content";
+        content.innerHTML = "";
+        if (msg) {
+          msg.innerHTML =
+            '<div class="err">Impossible de charger les enregistrements (<code>' +
+            esc(API_RECORDS_LIST) +
+            "</code>).</div>";
+        }
+      }
+    }
+
+    async function showRecordDetail(source, file, tabId, options) {
+      const opts = options || {};
+      const box = document.getElementById("record-detail-" + tabId);
+      if (!box) return;
+      selectedRecord = { tab: tabId, source: source, file: file };
+      document.querySelectorAll(".record-row").forEach(function (tr) {
+        const match =
+          tr.getAttribute("data-record-tab") === tabId &&
+          tr.getAttribute("data-record-source") === source &&
+          tr.getAttribute("data-record-file") === file;
+        tr.classList.toggle("row-record-selected", match);
+      });
+      box.classList.add("open");
+      box.innerHTML =
+        '<div class="record-detail-head"><strong class="mono">' +
+        esc(file) +
+        '</strong><button type="button" class="btn-close-record">Fermer</button></div><p class="loading" style="margin:12px 0 0;">Chargement…</p>';
+      if (!opts.skipScroll) box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      try {
+        const r = await fetch(
+          API_RECORDS_FILE + "?source=" + encodeURIComponent(source) + "&file=" + encodeURIComponent(file),
+          { credentials: "same-origin" }
+        );
+        const data = await r.json().catch(function () {
+          return {};
+        });
+        if (!r.ok) {
+          const detail = data && data.detail != null ? data.detail : "Erreur " + r.status;
+          throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+        }
+        const raw = data.data != null ? data.data : data;
+        const jsonLink =
+          "/agent_admin/records/file?source=" +
+          encodeURIComponent(source) +
+          "&file=" +
+          encodeURIComponent(file);
+        box.innerHTML =
+          '<div class="record-detail-head"><div><strong class="mono">' +
+          esc(file) +
+          '</strong> <span class="muted">(' +
+          esc(source) +
+          ')</span></div><div><a class="file-link" href="' +
+          esc(jsonLink) +
+          '" target="_blank" rel="noopener">JSON brut</a> · <button type="button" class="btn-close-record">Fermer</button></div></div><pre>' +
+          esc(JSON.stringify(raw, null, 2)) +
+          "</pre>";
+      } catch (e) {
+        box.innerHTML =
+          '<div class="record-detail-head"><strong class="mono">' +
+          esc(file) +
+          '</strong><button type="button" class="btn-close-record">Fermer</button></div><p class="err" style="margin:12px 0 0;">' +
+          esc(e && e.message ? e.message : String(e)) +
+          "</p>";
+      }
+    }
+
+    function closeRecordDetail(tabId) {
+      selectedRecord = null;
+      const box = document.getElementById("record-detail-" + tabId);
+      if (box) {
+        box.classList.remove("open");
+        box.innerHTML = "";
+      }
+      document.querySelectorAll('.record-row[data-record-tab="' + tabId + '"]').forEach(function (tr) {
+        tr.classList.remove("row-record-selected");
+      });
+    }
+
+    function showDetail() {
+      viewList.classList.add("hidden");
+      viewDetail.classList.add("active");
+      document.getElementById("detail-back").href = "/agent_admin/?tab=chat";
+      loadConversation();
+    }
+
+    document.getElementById("btn-refresh").addEventListener("click", loadList);
+    document.querySelectorAll("#admin-tabs .tab").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        switchTab(btn.getAttribute("data-tab") || "chat");
+      });
+    });
+    document.querySelectorAll(".btn-tab-refresh").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const panel = btn.closest(".tab-panel");
+        if (!panel || !panel.id) return;
+        const tabId = panel.id.replace("panel-", "");
+        loadRecordsTab(tabId);
+      });
+    });
+    document.addEventListener("click", function (event) {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const btn = target.closest("[data-archive-file]");
+      if (btn) {
+        archiveSessionFile(btn.getAttribute("data-archive-file"));
+        return;
+      }
+      const closeRec = target.closest(".btn-close-record");
+      if (closeRec) {
+        const panel = closeRec.closest(".record-detail");
+        if (panel && panel.getAttribute("data-panel")) {
+          closeRecordDetail(panel.getAttribute("data-panel"));
+        }
+        return;
+      }
+      const row = target.closest(".record-row");
+      if (row) {
+        event.preventDefault();
+        const tabId = row.getAttribute("data-record-tab");
+        const source = row.getAttribute("data-record-source");
+        const file = row.getAttribute("data-record-file");
+        if (tabId && source && file) showRecordDetail(source, file, tabId);
+        return;
+      }
+      const recLink = target.closest(".record-file-link");
+      if (recLink) {
+        event.preventDefault();
+        const tr = recLink.closest(".record-row");
+        if (tr) {
+          const tabId = tr.getAttribute("data-record-tab");
+          const source = tr.getAttribute("data-record-source");
+          const file = tr.getAttribute("data-record-file");
+          if (tabId && source && file) showRecordDetail(source, file, tabId);
+        }
+      }
+    });
+    btnSendHuman.addEventListener("click", sendHumanReply);
+    btnReloadConv.addEventListener("click", loadConversation);
+
+    function getAdminPrenom() {
+      const el =
+        document.getElementById("admin-prenom") || document.getElementById("admin-prenom-detail");
+      return el ? (el.value || "").trim() : "";
+    }
+
+    function syncAdminPrenomInputs(value, sourceEl) {
+      document.querySelectorAll(".admin-prenom-input").forEach(function (input) {
+        if (input !== sourceEl) input.value = value;
+      });
+      localStorage.setItem(STORAGE_PRENOM, value);
+    }
+
+    (function initPrenomField() {
+      const stored = localStorage.getItem(STORAGE_PRENOM);
+      const initial = stored === null || stored === "" ? "Paul" : stored;
+      document.querySelectorAll(".admin-prenom-input").forEach(function (el) {
+        el.value = initial;
+        el.addEventListener("input", function () {
+          syncAdminPrenomInputs(el.value, el);
+        });
+      });
+    })();
+
+    if (parseDetailParams()) {
+      showDetail();
+    } else {
+      activeTab = tabFromUrl();
+      switchTab(activeTab, { skipUrl: true });
+      refreshAllTabCounts();
+    }
+  </script>
+  <!--
+    Liste admin : les fichiers de session dont le nom contient « 127.0.0.1 »
+    (tests locaux, ex. speedtest) sont masqués — voir isLocalhostSessionFilename().
+  -->
+</body>
+</html>
