@@ -4,19 +4,23 @@
     "answer": "Je suis un agent virtuel, mais je peux transférer la conversation à un humain au besoin."
   },
   {
-    "question": "Est-il possible de rafraîchir l'image toutes les 5 minutes ?",
-    "answer": "Oui, au détriment de la batterie. Il est préférable de laisser l'appareil branché. Avec la durée d'une heure par défaut, l'autonomie est d'environ 2 mois."
+    "question": "Est-ce que le produit est disponible à la vente ?",
+    "answer": "Oui, le produit est disponible à la vente. Vous pouvez commander directement sur le site. Vous pouvez également contacter le service client pour plus d'informations."
   },
   {
-    "question": "L'appareil est-il étanche ?",
-    "answer": "Non, pas du tout. Il contient par ailleurs une batterie lithium : elle craint l'eau. L'appareil est certifié CE et présente une coque métallique, mais il faut garder des précautions."
+    "question": "Quel est le délai de livraison ? Puis-je suivre mon colis ?",
+    "answer": "Le transporteur utilisé est Colissimo avec signature, avec un numéro de suivi. Le délai de livraison est de 3 à 5 jours ouvrés."
   },
   {
-    "question": "L'appareil est-il lumineux la nuit ?",
-    "answer": "Non, justement : il utilise la lumière ambiante. Il ne pourrait pas tenir plusieurs mois sur batterie s'il était rétroéclairé."
+    "question": "Quel est le délai de rétractation ?",
+    "answer": "Le délai de rétractation est de 14 jours. Vous pouvez rétracter votre commande dans les 14 jours suivant la réception du produit. Vous pouvez également contacter le service client pour plus d'informations."
   },
   {
-    "question": "Puis-je changer la fréquence des phrases ?",
-    "answer": "Pas encore, mais cela est prévu dans le développement. Cependant, cela pourra impacter l'autonomie de la batterie. Avec la durée d'une heure par défaut, l'autonomie est d'environ 2 mois. Pour une fréquence plus élevée, inférieure à 30min, il est préférable de laisser l'appareil branché."
+    "question": "Le produit est-il difficle à installer ? ",
+    "answer": "Cela est relativement simple. Vous pouvez suivre le guide de démarrage rapide pour installer le produit. Vous pouvez également contacter le service client pour plus d'informations."
+  },
+  {
+    "question": "Avez-vous une app Android ou Apple ? ",
+    "answer": "Non, nous n'avons pas encore d'app sur les stores. Vous pouvez utiliser directement notre site web sur votre mobile. Il s'adaptera à votre écran."
   }
 ]

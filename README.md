@@ -6,6 +6,8 @@ It enables visitors to interact with either AI agents or human operators through
 
 It aims to be between a traditional live chat widget and a complex enterprise agent platform: simple enough to deploy in minutes, powerful enough to automate real customer-facing tasks.
 
+Visit http://webaiassistant.fr/ for realtime demo (in French).
+
 ## Why Website Agent? Typical use cases
 
 This agent can:
