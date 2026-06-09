@@ -156,6 +156,7 @@
     a.muted-link:hover { color: #bdc1c6; }
     .muted { color: #9aa0a6; }
     .loading { color: #9aa0a6; font-size: 14px; }
+    .hidden { display: none !important; }
     .archive-btn {
       display: inline-flex;
       align-items: center;
@@ -401,6 +402,58 @@
       display: none;
     }
     .record-detail.open { display: block; }
+
+    /* Login overlay */
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .auth-overlay.hidden { display: none; }
+    .auth-box {
+      background: #252830;
+      border: 1px solid #5f6368;
+      border-radius: 12px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .auth-box h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+    .auth-err {
+      background: rgba(234, 67, 53, 0.12);
+      border: 1px solid rgba(234, 67, 53, 0.4);
+      color: #f28b82;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .auth-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .auth-field label { font-size: 12px; color: #9aa0a6; font-weight: 500; }
+    .auth-field input {
+      padding: 10px 12px;
+      border: 1px solid #5f6368;
+      border-radius: 8px;
+      background: #1a1d23;
+      color: #e8eaed;
+      font-size: 15px;
+    }
+    .auth-field input:focus { outline: none; border-color: #8ab4f8; }
+
     .record-detail pre {
       margin: 12px 0 0;
       padding: 12px;
@@ -423,6 +476,23 @@
   </style>
 </head>
 <body>
+  <div id="auth-overlay" class="auth-overlay hidden" role="dialog" aria-modal="true" aria-label="Connexion">
+    <div class="auth-box">
+      <h2>Connexion backoffice</h2>
+      <div id="auth-err" class="auth-err hidden"></div>
+      <form id="auth-form" autocomplete="on">
+        <div class="auth-field">
+          <label for="auth-user">Identifiant</label>
+          <input type="text" id="auth-user" name="username" autocomplete="username" required placeholder="demat" />
+        </div>
+        <div class="auth-field">
+          <label for="auth-pass">Mot de passe</label>
+          <input type="password" id="auth-pass" name="password" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="primary" style="width:100%;margin-top:4px;padding:11px 16px;font-size:15px;">Se connecter</button>
+      </form>
+    </div>
+  </div>
   <div class="wrap">
     <datalist id="prenoms-suggestions">
       <option value="Paul"></option>
@@ -540,7 +610,18 @@
   </div>
   <script src="/static/admin/admin-auth.js"></script>
   <script>
-    const fetch = AdminAuth.fetch.bind(AdminAuth);
+    // Wrap AdminAuth.fetch to intercept 401 and show the login overlay.
+    // Named apiFetch (not fetch) to avoid overriding window.fetch, which would
+    // cause AdminAuth.fetch → window.fetch → AdminAuth.fetch infinite recursion.
+    const _baseFetch = AdminAuth.fetch.bind(AdminAuth);
+    async function apiFetch(url, opts) {
+      const r = await _baseFetch(url, opts);
+      if (r.status === 401) {
+        showAuthOverlay("Identifiants incorrects, veuillez vous reconnecter.");
+        throw new Error("Unauthorized");
+      }
+      return r;
+    }
     const API_BASE = "/backoffice";
     const API_LIST = API_BASE + "/sessions/list";
     const API_ARCHIVE = API_BASE + "/sessions/archive";
@@ -604,7 +685,7 @@
     }
 
     async function countChatSessions() {
-      const r = await fetch(API_LIST, { credentials: "same-origin" });
+      const r = await apiFetch(API_LIST, { credentials: "same-origin" });
       if (!r.ok) throw new Error("HTTP " + r.status);
       const data = await r.json();
       return (Array.isArray(data.sessions) ? data.sessions : []).filter(function (s) {
@@ -683,7 +764,7 @@
       if (!ok) return;
       const msg = document.getElementById("msg");
       try {
-        const r = await fetch(API_ARCHIVE, {
+        const r = await apiFetch(API_ARCHIVE, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "same-origin",
@@ -710,7 +791,7 @@
       content.className = "loading";
       content.textContent = "Chargement…";
       try {
-        const r = await fetch(API_LIST, { credentials: "same-origin" });
+        const r = await apiFetch(API_LIST, { credentials: "same-origin" });
         if (!r.ok) throw new Error("HTTP " + r.status);
         const data = await r.json();
         const sessions = (Array.isArray(data.sessions) ? data.sessions : []).filter(function (s) {
@@ -797,7 +878,7 @@
     async function loadConversation() {
       sendStatus.textContent = "";
       try {
-        const r = await fetch(transcriptUrl(), { credentials: "same-origin" });
+        const r = await apiFetch(transcriptUrl(), { credentials: "same-origin" });
         if (!r.ok) throw new Error("HTTP " + r.status);
         const data = await r.json();
         const file = data.file != null ? String(data.file) : detailQueryFile || "";
@@ -849,7 +930,7 @@
       const prenom = getAdminPrenom();
       if (prenom) body.prenom = prenom;
       try {
-        const r = await fetch(API_HUMAN, {
+        const r = await apiFetch(API_HUMAN, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "same-origin",
@@ -879,7 +960,7 @@
       if (detailQueryFile) body.file = detailQueryFile;
       else body.sessionId = detailQuerySession;
       try {
-        const r = await fetch(API_HUMAN_IN_CHARGE, {
+        const r = await apiFetch(API_HUMAN_IN_CHARGE, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "same-origin",
@@ -961,7 +1042,7 @@
     }
 
     async function fetchRecordsForSource(source) {
-      const r = await fetch(API_RECORDS_LIST + "?source=" + encodeURIComponent(source), {
+      const r = await apiFetch(API_RECORDS_LIST + "?source=" + encodeURIComponent(source), {
         credentials: "same-origin",
       });
       if (!r.ok) throw new Error("HTTP " + r.status);
@@ -1026,7 +1107,7 @@
         '</strong><button type="button" class="btn-close-record">Fermer</button></div><p class="loading" style="margin:12px 0 0;">Chargement…</p>';
       if (!opts.skipScroll) box.scrollIntoView({ behavior: "smooth", block: "nearest" });
       try {
-        const r = await fetch(
+        const r = await apiFetch(
           API_RECORDS_FILE + "?source=" + encodeURIComponent(source) + "&file=" + encodeURIComponent(file),
           { credentials: "same-origin" }
         );
@@ -1161,12 +1242,50 @@
       });
     })();
 
-    if (parseDetailParams()) {
-      showDetail();
+    function showAuthOverlay(errorMsg) {
+      const overlay = document.getElementById("auth-overlay");
+      const errEl = document.getElementById("auth-err");
+      if (errorMsg) {
+        errEl.textContent = errorMsg;
+        errEl.classList.remove("hidden");
+      } else {
+        errEl.classList.add("hidden");
+      }
+      overlay.classList.remove("hidden");
+      const firstInput = document.getElementById("auth-user");
+      if (!firstInput.value) firstInput.focus();
+      else document.getElementById("auth-pass").focus();
+    }
+
+    function hideAuthOverlay() {
+      document.getElementById("auth-overlay").classList.add("hidden");
+      document.getElementById("auth-err").classList.add("hidden");
+    }
+
+    document.getElementById("auth-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const user = document.getElementById("auth-user").value.trim();
+      const pass = document.getElementById("auth-pass").value;
+      if (!user) return;
+      AdminAuth.setBasic(user, pass);
+      hideAuthOverlay();
+      initPage();
+    });
+
+    function initPage() {
+      if (parseDetailParams()) {
+        showDetail();
+      } else {
+        activeTab = tabFromUrl();
+        switchTab(activeTab, { skipUrl: true });
+        refreshAllTabCounts();
+      }
+    }
+
+    if (AdminAuth.getBasic()) {
+      initPage();
     } else {
-      activeTab = tabFromUrl();
-      switchTab(activeTab, { skipUrl: true });
-      refreshAllTabCounts();
+      showAuthOverlay();
     }
   </script>
   <!--
