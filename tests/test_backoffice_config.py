@@ -77,6 +77,50 @@ def test_api_faq_roundtrip(backoffice_dirs, client) -> None:
     assert r.json()["entries"][0]["question"] == "Q2"
 
 
+def test_ensure_faq_from_example_copies_when_missing(tmp_path, monkeypatch) -> None:
+    from app import backoffice_store
+
+    bo = tmp_path / "backoffice"
+    bo.mkdir()
+    example = tmp_path / "faq.json.example"
+    example.write_text(
+        json.dumps([{"question": "Q?", "answer": "A."}], ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(config, "BACKOFFICE_DIR", bo)
+    monkeypatch.setattr(backoffice_store, "_FAQ_PATH", bo / "faq.json")
+    monkeypatch.setattr(backoffice_store, "_FAQ_EXAMPLE_PATH", example)
+
+    backoffice_store.ensure_faq_from_example()
+
+    assert (bo / "faq.json").is_file()
+    assert backoffice_store.read_faq() == [{"question": "Q?", "answer": "A."}]
+
+
+def test_ensure_faq_from_example_does_not_overwrite(tmp_path, monkeypatch) -> None:
+    from app import backoffice_store
+
+    bo = tmp_path / "backoffice"
+    bo.mkdir()
+    faq_path = bo / "faq.json"
+    faq_path.write_text(
+        json.dumps([{"question": "Existing", "answer": "Keep"}], ensure_ascii=False),
+        encoding="utf-8",
+    )
+    example = tmp_path / "faq.json.example"
+    example.write_text(
+        json.dumps([{"question": "New", "answer": "Replace"}], ensure_ascii=False),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(config, "BACKOFFICE_DIR", bo)
+    monkeypatch.setattr(backoffice_store, "_FAQ_PATH", faq_path)
+    monkeypatch.setattr(backoffice_store, "_FAQ_EXAMPLE_PATH", example)
+
+    backoffice_store.ensure_faq_from_example()
+
+    assert backoffice_store.read_faq() == [{"question": "Existing", "answer": "Keep"}]
+
+
 def test_api_scenario_roundtrip(backoffice_dirs, client) -> None:
     r = client.get("/backoffice/scenarii/list")
     assert r.status_code == 200

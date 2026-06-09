@@ -224,6 +224,8 @@ location ~ ^/(backoffice/|admin/) {
 
 | `backoffice/faq.json` | Short Q/A |
 
+| `backoffice/faq.json.example` | FAQ template (auto-copied to `faq.json` on first startup if missing) |
+
 | `backoffice/scenarii/*.md` | Scenario playbooks |
 
 | `backoffice/perimeter.json` | Enabled features |

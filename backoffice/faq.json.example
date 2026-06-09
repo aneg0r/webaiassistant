@@ -1,0 +1,26 @@
+[
+  {
+    "question": "Are you human?",
+    "answer": "I am a virtual agent, but I can transfer the conversation to a human if needed."
+  },
+  {
+    "question": "Is the product available for purchase?",
+    "answer": "Yes, the product is available for purchase. You can order directly on the website. You can also contact customer service for more information."
+  },
+  {
+    "question": "What is the delivery time? Can I track my package?",
+    "answer": "The carrier used is Colissimo with signature, with a tracking number. Delivery time is 3 to 5 business days."
+  },
+  {
+    "question": "What is the cooling-off period?",
+    "answer": "The cooling-off period is 14 days. You can cancel your order within 14 days of receiving the product. You can also contact customer service for more information."
+  },
+  {
+    "question": "Is the product difficult to install?",
+    "answer": "It is relatively simple. You can follow the quick start guide to install the product. You can also contact customer service for more information."
+  },
+  {
+    "question": "Do you have an Android or Apple app?",
+    "answer": "No, we do not have an app on the stores yet. You can use our website directly on your mobile. It will adapt to your screen."
+  }
+]

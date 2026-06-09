@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app import config
 from app.auth import require_admin
+from app import backoffice_store
 from app.routes import admin, agent, backoffice_config
 from app.schemas import (
     ArchiveSessionBody,
@@ -184,3 +185,4 @@ async def ensure_dirs():
         d.mkdir(parents=True, exist_ok=True)
     if not config.CHAT_SESSION_INDEX_PATH.is_file():
         config.CHAT_SESSION_INDEX_PATH.write_text("{}", encoding="utf-8")
+    backoffice_store.ensure_faq_from_example()

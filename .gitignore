@@ -9,3 +9,5 @@ var/sessions/
 var/records/
 var/index/chat_session_index.json
 !var/**/.gitkeep
+
+backoffice/faq.json

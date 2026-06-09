@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,7 @@ from app import config
 from app.content import invalidate_faq_cache, invalidate_scenarii_cache
 
 _FAQ_PATH = config.BACKOFFICE_DIR / "faq.json"
+_FAQ_EXAMPLE_PATH = config.PROJECT_ROOT / "backoffice" / "faq.json.example"
 _SCENARII_DIR = config.SCENARII_DIR
 
 _SCENARIO_NAME_RE = re.compile(r"^[a-zA-Z0-9._-]+\.md$")
@@ -20,6 +22,16 @@ _SCENARIO_NAME_RE = re.compile(r"^[a-zA-Z0-9._-]+\.md$")
 def _ensure_backoffice_dirs() -> None:
     config.BACKOFFICE_DIR.mkdir(parents=True, exist_ok=True)
     _SCENARII_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def ensure_faq_from_example() -> None:
+    """Copy bundled FAQ template if runtime file is missing."""
+    _ensure_backoffice_dirs()
+    if _FAQ_PATH.is_file():
+        return
+    if not _FAQ_EXAMPLE_PATH.is_file():
+        return
+    shutil.copy2(_FAQ_EXAMPLE_PATH, _FAQ_PATH)
 
 
 def validate_faq_payload(data: Any) -> list[dict[str, str]]:
