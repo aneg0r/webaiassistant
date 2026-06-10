@@ -27,6 +27,11 @@ def invalidate_scenarii_cache() -> None:
     _scenarii_mtime_key = None
 
 
+def invalidate_wiki_cache() -> None:
+    global _wiki_cache
+    _wiki_cache = None
+
+
 def load_faq_block() -> str:
     global _faq_cache, _faq_mtime
     path = config._resolve_read_path(

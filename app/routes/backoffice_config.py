@@ -1,4 +1,4 @@
-"""Admin API to edit backoffice/faq.json and backoffice/scenarii/*.md."""
+"""Admin API to edit backoffice/faq.json, wiki.md, and backoffice/scenarii/*.md."""
 
 from __future__ import annotations
 
@@ -29,6 +29,10 @@ class ScenarioPutBody(BaseModel):
     content: str = Field(..., min_length=1)
 
 
+class WikiPutBody(BaseModel):
+    content: str = ""
+
+
 @router.get("/faq", dependencies=[Depends(_admin_dep)])
 async def get_faq() -> JSONResponse:
     try:
@@ -45,6 +49,24 @@ async def put_faq(body: FaqPutBody) -> JSONResponse:
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     return JSONResponse({"ok": True, "entries": entries})
+
+
+@router.get("/wiki", dependencies=[Depends(_admin_dep)])
+async def get_wiki() -> JSONResponse:
+    try:
+        content = backoffice_store.read_wiki()
+    except ValueError as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    return JSONResponse({"content": content})
+
+
+@router.put("/wiki", dependencies=[Depends(_admin_dep)])
+async def put_wiki(body: WikiPutBody) -> JSONResponse:
+    try:
+        content = backoffice_store.write_wiki(body.content)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return JSONResponse({"ok": True, "content": content})
 
 
 @router.get("/scenarii/list", dependencies=[Depends(_admin_dep)])

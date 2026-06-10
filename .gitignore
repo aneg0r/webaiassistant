@@ -11,3 +11,5 @@ var/index/chat_session_index.json
 !var/**/.gitkeep
 
 backoffice/faq.json
+backoffice/wiki.md
+backoffice/scenarii/*.md

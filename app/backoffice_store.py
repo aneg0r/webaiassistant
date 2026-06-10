@@ -10,13 +10,14 @@ from pathlib import Path
 from typing import Any
 
 from app import config
-from app.content import invalidate_faq_cache, invalidate_scenarii_cache
+from app.content import invalidate_faq_cache, invalidate_scenarii_cache, invalidate_wiki_cache
 
 _FAQ_PATH = config.BACKOFFICE_DIR / "faq.json"
 _FAQ_EXAMPLE_PATH = config.PROJECT_ROOT / "backoffice" / "faq.json.example"
 _WIKI_PATH = config.BACKOFFICE_DIR / "wiki.md"
 _WIKI_EXAMPLE_PATH = config.PROJECT_ROOT / "backoffice" / "wiki.md.example"
 _SCENARII_DIR = config.SCENARII_DIR
+_SCENARII_EXAMPLE_DIR = config.PROJECT_ROOT / "backoffice" / "scenarii.example"
 
 _SCENARIO_NAME_RE = re.compile(r"^[a-zA-Z0-9._-]+\.md$")
 
@@ -44,6 +45,17 @@ def ensure_wiki_from_example() -> None:
     _copy_backoffice_file_from_example(_WIKI_PATH, _WIKI_EXAMPLE_PATH)
 
 
+def ensure_scenarii_from_example() -> None:
+    """Copy all bundled scenario templates on first install only."""
+    if _SCENARII_DIR.is_dir():
+        return
+    if not _SCENARII_EXAMPLE_DIR.is_dir():
+        return
+    _SCENARII_DIR.mkdir(parents=True, exist_ok=True)
+    for src in sorted(_SCENARII_EXAMPLE_DIR.glob("*.md")):
+        shutil.copy2(src, _SCENARII_DIR / src.name)
+
+
 def validate_faq_payload(data: Any) -> list[dict[str, str]]:
     if not isinstance(data, list):
         raise ValueError("FAQ must be a JSON array")
@@ -68,6 +80,26 @@ def read_faq() -> list[dict[str, str]]:
     except (OSError, json.JSONDecodeError) as e:
         raise ValueError("FAQ file unreadable or invalid JSON") from e
     return validate_faq_payload(raw)
+
+
+def read_wiki() -> str:
+    _ensure_backoffice_dirs()
+    if not _WIKI_PATH.is_file():
+        return ""
+    try:
+        return _WIKI_PATH.read_text(encoding="utf-8")
+    except OSError as e:
+        raise ValueError("wiki file unreadable") from e
+
+
+def write_wiki(content: str) -> str:
+    if content is None:
+        raise ValueError("content required")
+    text = str(content)
+    _ensure_backoffice_dirs()
+    _WIKI_PATH.write_text(text if text.endswith("\n") else text + "\n", encoding="utf-8")
+    invalidate_wiki_cache()
+    return _WIKI_PATH.read_text(encoding="utf-8")
 
 
 def write_faq(data: Any) -> list[dict[str, str]]:

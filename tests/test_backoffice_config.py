@@ -21,11 +21,13 @@ def backoffice_dirs(tmp_path, monkeypatch):
         encoding="utf-8",
     )
     (scen / "test_scenario.md").write_text("# Test\n", encoding="utf-8")
+    (bo / "wiki.md").write_text("# Wiki\n", encoding="utf-8")
     monkeypatch.setattr(config, "BACKOFFICE_DIR", bo)
     monkeypatch.setattr(config, "SCENARII_DIR", scen)
     import app.backoffice_store as store
 
     monkeypatch.setattr(store, "_FAQ_PATH", bo / "faq.json")
+    monkeypatch.setattr(store, "_WIKI_PATH", bo / "wiki.md")
     monkeypatch.setattr(store, "_SCENARII_DIR", scen)
     return bo, scen
 
@@ -62,6 +64,24 @@ def test_scenario_path_traversal(backoffice_dirs) -> None:
         backoffice_store.read_scenario_file("../faq.json")
     with pytest.raises(ValueError):
         backoffice_store.write_scenario_file("bad.txt", "x")
+
+
+def test_read_write_wiki(backoffice_dirs) -> None:
+    from app import backoffice_store
+
+    assert backoffice_store.read_wiki() == "# Wiki\n"
+    backoffice_store.write_wiki("# Updated\n")
+    assert backoffice_store.read_wiki() == "# Updated\n"
+
+
+def test_api_wiki_roundtrip(backoffice_dirs, client) -> None:
+    r = client.get("/backoffice/wiki")
+    assert r.status_code == 200
+    assert "# Wiki" in r.json()["content"]
+
+    r = client.put("/backoffice/wiki", json={"content": "# New wiki\n"})
+    assert r.status_code == 200
+    assert r.json()["content"] == "# New wiki\n"
 
 
 def test_api_faq_roundtrip(backoffice_dirs, client) -> None:
@@ -154,6 +174,75 @@ def test_ensure_wiki_from_example_does_not_overwrite(tmp_path, monkeypatch) -> N
     backoffice_store.ensure_wiki_from_example()
 
     assert wiki_path.read_text(encoding="utf-8") == "# Existing\n"
+
+
+def test_ensure_scenarii_from_example_copies_all_when_dir_missing(
+    tmp_path, monkeypatch
+) -> None:
+    from app import backoffice_store
+
+    bo = tmp_path / "backoffice"
+    bo.mkdir()
+    scen = bo / "scenarii"
+    example_dir = tmp_path / "scenarii.example"
+    example_dir.mkdir()
+    (example_dir / "a.md").write_text("# A\n", encoding="utf-8")
+    (example_dir / "b.md").write_text("# B\n", encoding="utf-8")
+    monkeypatch.setattr(config, "BACKOFFICE_DIR", bo)
+    monkeypatch.setattr(config, "SCENARII_DIR", scen)
+    monkeypatch.setattr(backoffice_store, "_SCENARII_DIR", scen)
+    monkeypatch.setattr(backoffice_store, "_SCENARII_EXAMPLE_DIR", example_dir)
+
+    backoffice_store.ensure_scenarii_from_example()
+
+    assert scen.is_dir()
+    assert (scen / "a.md").read_text(encoding="utf-8") == "# A\n"
+    assert (scen / "b.md").read_text(encoding="utf-8") == "# B\n"
+
+
+def test_ensure_scenarii_from_example_skips_when_dir_exists_empty(
+    tmp_path, monkeypatch
+) -> None:
+    from app import backoffice_store
+
+    bo = tmp_path / "backoffice"
+    scen = bo / "scenarii"
+    scen.mkdir(parents=True)
+    example_dir = tmp_path / "scenarii.example"
+    example_dir.mkdir()
+    (example_dir / "a.md").write_text("# A\n", encoding="utf-8")
+    monkeypatch.setattr(config, "BACKOFFICE_DIR", bo)
+    monkeypatch.setattr(config, "SCENARII_DIR", scen)
+    monkeypatch.setattr(backoffice_store, "_SCENARII_DIR", scen)
+    monkeypatch.setattr(backoffice_store, "_SCENARII_EXAMPLE_DIR", example_dir)
+
+    backoffice_store.ensure_scenarii_from_example()
+
+    assert not (scen / "a.md").exists()
+
+
+def test_ensure_scenarii_from_example_skips_when_dir_exists_partial(
+    tmp_path, monkeypatch
+) -> None:
+    from app import backoffice_store
+
+    bo = tmp_path / "backoffice"
+    scen = bo / "scenarii"
+    scen.mkdir(parents=True)
+    (scen / "a.md").write_text("# Local A\n", encoding="utf-8")
+    example_dir = tmp_path / "scenarii.example"
+    example_dir.mkdir()
+    (example_dir / "a.md").write_text("# Template A\n", encoding="utf-8")
+    (example_dir / "b.md").write_text("# B\n", encoding="utf-8")
+    monkeypatch.setattr(config, "BACKOFFICE_DIR", bo)
+    monkeypatch.setattr(config, "SCENARII_DIR", scen)
+    monkeypatch.setattr(backoffice_store, "_SCENARII_DIR", scen)
+    monkeypatch.setattr(backoffice_store, "_SCENARII_EXAMPLE_DIR", example_dir)
+
+    backoffice_store.ensure_scenarii_from_example()
+
+    assert (scen / "a.md").read_text(encoding="utf-8") == "# Local A\n"
+    assert not (scen / "b.md").exists()
 
 
 def test_api_scenario_roundtrip(backoffice_dirs, client) -> None:

@@ -146,6 +146,10 @@ Omit `#ixfeedback-widget-root` if you only need the chat. The feedback tab mount
 
 | PUT | `/backoffice/faq` `{ "entries": [{ "question", "answer" }] }` |
 
+| GET | `/backoffice/wiki` |
+
+| PUT | `/backoffice/wiki` `{ "content": "…" }` |
+
 | GET | `/backoffice/scenarii/list` |
 
 | GET | `/backoffice/scenarii/file?file=` |
@@ -226,7 +230,9 @@ location ~ ^/(backoffice/|admin/) {
 
 | `backoffice/faq.json.example` | FAQ template (auto-copied to `faq.json` on first startup if missing) |
 
-| `backoffice/scenarii/*.md` | Scenario playbooks |
+| `backoffice/scenarii/*.md` | Local scenario playbooks (gitignored) |
+
+| `backoffice/scenarii.example/*.md` | Scenario templates (full copy to `scenarii/` only on first install when `scenarii/` does not exist) |
 
 | `backoffice/perimeter.json` | Enabled features |
 

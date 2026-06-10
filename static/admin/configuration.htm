@@ -129,14 +129,15 @@
     </nav>
     <h1>Configuration agent</h1>
     <p class="sub">
-      Édition de <code>backoffice/faq.json</code> et <code>backoffice/scenarii/*.md</code>.
+      Édition de <code>backoffice/faq.json</code>, <code>backoffice/wiki.md</code> et <code>backoffice/scenarii/*.md</code>.
       Les changements sont pris en compte au prochain message (cache invalidé à l’enregistrement).
     </p>
     <div id="auth-warn" class="err-box" style="display:none;"></div>
 
     <div class="tabs" role="tablist">
-      <button type="button" id="tab-faq" class="active" role="tab" aria-selected="true">FAQ</button>
-      <button type="button" id="tab-scen" role="tab" aria-selected="false">Scénarios</button>
+      <button type="button" id="tab-faq" class="active" role="tab" aria-selected="true" data-tab="faq">FAQ</button>
+      <button type="button" id="tab-scen" role="tab" aria-selected="false" data-tab="scen">Scénarios</button>
+      <button type="button" id="tab-wiki" role="tab" aria-selected="false" data-tab="wiki">Wiki</button>
     </div>
 
     <section id="panel-faq" class="panel active" role="tabpanel">
@@ -159,6 +160,19 @@
         </table>
       </div>
       <p class="muted" style="margin-top:12px;">Format enregistré : tableau JSON <code>[{ "question", "answer" }]</code></p>
+    </section>
+
+    <section id="panel-wiki" class="panel" role="tabpanel">
+      <div class="toolbar">
+        <button type="button" id="wiki-reload">Recharger</button>
+        <button type="button" id="wiki-save" class="primary">Enregistrer wiki</button>
+        <span id="wiki-status" class="status"></span>
+      </div>
+      <p class="muted" style="margin:0 0 8px;">
+        Fichier <code>backoffice/wiki.md</code> — injecté dans le prompt si
+        <code>INJECT_WIKI_IN_PROMPT=true</code> ou <code>wiki_in_prompt</code> dans <code>perimeter.json</code>.
+      </p>
+      <textarea id="wiki-editor" placeholder="Chargement…"></textarea>
     </section>
 
     <section id="panel-scen" class="panel" role="tabpanel">
@@ -186,11 +200,14 @@
   const fetch = AdminAuth.fetch.bind(AdminAuth);
   const API_BASE = "/backoffice";
   const API_FAQ = API_BASE + "/faq";
+  const API_WIKI = API_BASE + "/wiki";
   const API_SCEN_LIST = API_BASE + "/scenarii/list";
   const API_SCEN_FILE = API_BASE + "/scenarii/file";
 
   let currentScenFile = null;
   let scenDirty = false;
+  let wikiDirty = false;
+  let wikiLoaded = false;
 
   function esc(s) {
     return String(s)
@@ -227,20 +244,31 @@
   }
 
   function switchTab(which) {
-    const faq = which === "faq";
-    document.getElementById("tab-faq").classList.toggle("active", faq);
-    document.getElementById("tab-scen").classList.toggle("active", !faq);
-    document.getElementById("tab-faq").setAttribute("aria-selected", faq ? "true" : "false");
-    document.getElementById("tab-scen").setAttribute("aria-selected", faq ? "false" : "true");
-    document.getElementById("panel-faq").classList.toggle("active", faq);
-    document.getElementById("panel-scen").classList.toggle("active", !faq);
-    if (!faq && !document.getElementById("scen-files").children.length) {
+    if (which === "scen" && wikiDirty && !confirm("Modifications wiki non enregistrées. Continuer ?")) return;
+    if (which === "wiki" && scenDirty && !confirm("Modifications scénario non enregistrées. Continuer ?")) return;
+    if (which === "faq" && (wikiDirty || scenDirty)) {
+      const msg = [];
+      if (wikiDirty) msg.push("wiki");
+      if (scenDirty) msg.push("scénario");
+      if (!confirm("Modifications " + msg.join(" / ") + " non enregistrées. Continuer ?")) return;
+    }
+    ["faq", "scen", "wiki"].forEach(function (id) {
+      const on = which === id;
+      document.getElementById("tab-" + id).classList.toggle("active", on);
+      document.getElementById("tab-" + id).setAttribute("aria-selected", on ? "true" : "false");
+      document.getElementById("panel-" + id).classList.toggle("active", on);
+    });
+    if (which === "scen" && !document.getElementById("scen-files").children.length) {
       loadScenariiList();
+    }
+    if (which === "wiki" && !wikiLoaded) {
+      loadWiki();
     }
   }
 
-  document.getElementById("tab-faq").addEventListener("click", function () { switchTab("faq"); });
-  document.getElementById("tab-scen").addEventListener("click", function () { switchTab("scen"); });
+  document.querySelectorAll(".tabs button[data-tab]").forEach(function (btn) {
+    btn.addEventListener("click", function () { switchTab(btn.getAttribute("data-tab")); });
+  });
 
   function faqRow(entry, index) {
     const tr = document.createElement("tr");
@@ -306,6 +334,53 @@
       btn.disabled = false;
     }
   }
+
+  async function loadWiki() {
+    const st = document.getElementById("wiki-status");
+    const editor = document.getElementById("wiki-editor");
+    setStatus(st, "Chargement…", "");
+    try {
+      const data = await apiFetch(API_WIKI);
+      editor.value = data.content || "";
+      wikiDirty = false;
+      wikiLoaded = true;
+      setStatus(st, editor.value.length ? editor.value.length + " caractère(s)" : "Fichier vide", "ok");
+    } catch (e) {
+      setStatus(st, e.message, "err");
+    }
+  }
+
+  async function saveWiki() {
+    const st = document.getElementById("wiki-status");
+    const btn = document.getElementById("wiki-save");
+    const editor = document.getElementById("wiki-editor");
+    btn.disabled = true;
+    setStatus(st, "Enregistrement…", "");
+    try {
+      const data = await apiFetch(API_WIKI, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editor.value }),
+      });
+      editor.value = data.content || editor.value;
+      wikiDirty = false;
+      setStatus(st, "Wiki enregistré.", "ok");
+    } catch (e) {
+      setStatus(st, e.message, "err");
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById("wiki-editor").addEventListener("input", function () {
+    wikiDirty = true;
+  });
+  document.getElementById("wiki-reload").addEventListener("click", function () {
+    if (wikiDirty && !confirm("Modifications non enregistrées. Recharger ?")) return;
+    wikiLoaded = false;
+    loadWiki();
+  });
+  document.getElementById("wiki-save").addEventListener("click", saveWiki);
 
   document.getElementById("faq-add").addEventListener("click", function () {
     document.getElementById("faq-body").appendChild(faqRow({ question: "", answer: "" }, 0));

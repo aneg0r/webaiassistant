@@ -170,6 +170,7 @@ async def compat_api_human_in_charge(request: Request, body: HumanInChargeBody):
 
 @app.on_event("startup")
 async def ensure_dirs():
+    backoffice_store.ensure_scenarii_from_example()
     for d in (
         config.SESSIONS_DIR,
         config.SESSIONS_DIR / "archived",
