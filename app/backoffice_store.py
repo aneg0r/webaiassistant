@@ -131,6 +131,39 @@ def list_scenario_files() -> list[str]:
     return sorted(names, key=str.lower)
 
 
+def list_scenario_example_files() -> list[str]:
+    if not _SCENARII_EXAMPLE_DIR.is_dir():
+        return []
+    names = [p.name for p in _SCENARII_EXAMPLE_DIR.glob("*.md") if p.is_file()]
+    return sorted(names, key=str.lower)
+
+
+def read_scenario_example_file(name: str) -> dict[str, str]:
+    fname = _safe_scenario_filename(name)
+    path = _SCENARII_EXAMPLE_DIR / fname
+    if not path.is_file():
+        raise LookupError("example scenario file not found")
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError as e:
+        raise ValueError("example scenario file unreadable") from e
+    return {"file": fname, "content": content}
+
+
+def copy_scenario_from_example(name: str, *, overwrite: bool = False) -> dict[str, str]:
+    fname = _safe_scenario_filename(name)
+    src = _SCENARII_EXAMPLE_DIR / fname
+    if not src.is_file():
+        raise LookupError("example scenario file not found")
+    _ensure_backoffice_dirs()
+    dest = _SCENARII_DIR / fname
+    if dest.is_file() and not overwrite:
+        raise FileExistsError("scenario file already exists")
+    shutil.copy2(src, dest)
+    invalidate_scenarii_cache()
+    return read_scenario_file(fname)
+
+
 def read_scenario_file(name: str) -> dict[str, str]:
     fname = _safe_scenario_filename(name)
     path = _SCENARII_DIR / fname

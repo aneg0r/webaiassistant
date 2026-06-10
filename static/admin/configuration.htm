@@ -117,6 +117,46 @@
     }
     .file-list li button:hover { background: rgba(255,255,255,0.05); }
     .file-list li button.active { background: rgba(26, 115, 232, 0.2); color: #8ab4f8; }
+    .file-list li.file-row {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      border-bottom: 1px solid #3c4043;
+    }
+    .file-list li.file-row button.file-name {
+      flex: 1;
+      border: none;
+      border-radius: 0;
+      border-right: 1px solid #3c4043;
+      background: transparent;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 12px;
+      text-align: left;
+    }
+    .file-list li.file-row button.file-name:hover { background: rgba(255,255,255,0.05); }
+    .file-list li.file-row button.file-name.active { background: rgba(26, 115, 232, 0.2); color: #8ab4f8; }
+    .file-list li.file-row button.copy-btn {
+      flex: 0 0 auto;
+      border: none;
+      border-radius: 0;
+      background: #2d3139;
+      font-size: 11px;
+      padding: 8px 10px;
+      white-space: nowrap;
+    }
+    .file-list li.file-row button.copy-btn:hover { background: #1a73e8; }
+    .scen-sidebar { display: flex; flex-direction: column; gap: 0; min-height: 0; }
+    .scen-example-block {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #3c4043;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .scen-example-block .file-list { max-height: 220px; }
+    .editor-hint.example { color: #fdd663; }
     .muted { color: #9aa0a6; font-size: 13px; }
     code { font-size: 12px; background: #1a1d23; padding: 2px 6px; border-radius: 4px; }
   </style>
@@ -182,12 +222,19 @@
         <span id="scen-status" class="status"></span>
       </div>
       <div class="scen-layout">
-        <div>
-          <p class="muted" style="margin:0 0 8px;">Fichiers</p>
+        <div class="scen-sidebar">
+          <p class="muted" style="margin:0 0 8px;">Fichiers (production)</p>
           <ul id="scen-files" class="file-list"></ul>
+          <div class="scen-example-block">
+            <p class="muted" style="margin:0 0 8px;">Exemples — <code>scenarii.example/</code></p>
+            <ul id="scen-example-files" class="file-list"></ul>
+          </div>
         </div>
         <div>
-          <p class="muted" style="margin:0 0 8px;">Contenu — <strong id="scen-current">(aucun)</strong></p>
+          <p class="muted" style="margin:0 0 8px;">
+            Contenu — <strong id="scen-current">(aucun)</strong>
+            <span id="scen-source-hint" class="editor-hint"></span>
+          </p>
           <textarea id="scen-editor" placeholder="Sélectionnez un fichier…" disabled></textarea>
         </div>
       </div>
@@ -203,9 +250,15 @@
   const API_WIKI = API_BASE + "/wiki";
   const API_SCEN_LIST = API_BASE + "/scenarii/list";
   const API_SCEN_FILE = API_BASE + "/scenarii/file";
+  const API_SCEN_EXAMPLES_LIST = API_BASE + "/scenarii/examples/list";
+  const API_SCEN_EXAMPLES_FILE = API_BASE + "/scenarii/examples/file";
+  const API_SCEN_EXAMPLES_COPY = API_BASE + "/scenarii/examples/copy";
 
   let currentScenFile = null;
+  let currentScenExample = null;
   let scenDirty = false;
+  let productionScenFiles = [];
+  let scenPanelLoaded = false;
   let wikiDirty = false;
   let wikiLoaded = false;
 
@@ -258,8 +311,9 @@
       document.getElementById("tab-" + id).setAttribute("aria-selected", on ? "true" : "false");
       document.getElementById("panel-" + id).classList.toggle("active", on);
     });
-    if (which === "scen" && !document.getElementById("scen-files").children.length) {
-      loadScenariiList();
+    if (which === "scen" && !scenPanelLoaded) {
+      scenPanelLoaded = true;
+      refreshScenariiPanel();
     }
     if (which === "wiki" && !wikiLoaded) {
       loadWiki();
@@ -388,6 +442,27 @@
   document.getElementById("faq-reload").addEventListener("click", loadFaq);
   document.getElementById("faq-save").addEventListener("click", saveFaq);
 
+  function clearScenSelectionHighlight() {
+    document.querySelectorAll("#scen-files button, #scen-example-files button.file-name").forEach(function (b) {
+      b.classList.remove("active");
+    });
+  }
+
+  function setScenSourceHint(isExample) {
+    const hint = document.getElementById("scen-source-hint");
+    if (isExample) {
+      hint.textContent = " (aperçu exemple — enregistrement désactivé)";
+      hint.className = "editor-hint example";
+    } else {
+      hint.textContent = "";
+      hint.className = "editor-hint";
+    }
+  }
+
+  async function refreshScenariiPanel() {
+    await Promise.all([loadScenariiList(), loadScenariiExamples()]);
+  }
+
   async function loadScenariiList() {
     const st = document.getElementById("scen-status");
     const ul = document.getElementById("scen-files");
@@ -395,23 +470,24 @@
     try {
       const data = await apiFetch(API_SCEN_LIST);
       const files = data.files || [];
+      productionScenFiles = files.slice();
       ul.innerHTML = "";
       if (!files.length) {
         ul.innerHTML = '<li class="muted" style="padding:12px;">Aucun fichier .md</li>';
-        return;
-      }
-      files.forEach(function (name) {
-        const li = document.createElement("li");
-        const b = document.createElement("button");
-        b.type = "button";
-        b.textContent = name;
-        b.addEventListener("click", function () {
-          selectScenario(name, b);
+      } else {
+        files.forEach(function (name) {
+          const li = document.createElement("li");
+          const b = document.createElement("button");
+          b.type = "button";
+          b.textContent = name;
+          b.addEventListener("click", function () {
+            selectScenario(name, b);
+          });
+          li.appendChild(b);
+          ul.appendChild(li);
         });
-        li.appendChild(b);
-        ul.appendChild(li);
-      });
-      setStatus(st, files.length + " fichier(s)", "ok");
+      }
+      setStatus(st, files.length + " fichier(s) production", "ok");
       if (currentScenFile && files.indexOf(currentScenFile) >= 0) {
         const btn = Array.prototype.find.call(
           ul.querySelectorAll("button"),
@@ -424,15 +500,61 @@
     }
   }
 
+  async function loadScenariiExamples() {
+    const ul = document.getElementById("scen-example-files");
+    try {
+      const data = await apiFetch(API_SCEN_EXAMPLES_LIST);
+      const files = data.files || [];
+      ul.innerHTML = "";
+      if (!files.length) {
+        ul.innerHTML = '<li class="muted" style="padding:12px;">Aucun exemple</li>';
+        return;
+      }
+      files.forEach(function (name) {
+        const li = document.createElement("li");
+        li.className = "file-row";
+        const nameBtn = document.createElement("button");
+        nameBtn.type = "button";
+        nameBtn.className = "file-name";
+        nameBtn.textContent = name;
+        nameBtn.title = "Aperçu";
+        nameBtn.addEventListener("click", function () {
+          previewScenarioExample(name, nameBtn);
+        });
+        const copyBtn = document.createElement("button");
+        copyBtn.type = "button";
+        copyBtn.className = "copy-btn";
+        copyBtn.textContent = "Copier";
+        copyBtn.title = "Copier vers scenarii/";
+        copyBtn.addEventListener("click", function (ev) {
+          ev.stopPropagation();
+          copyScenarioExample(name);
+        });
+        li.appendChild(nameBtn);
+        li.appendChild(copyBtn);
+        ul.appendChild(li);
+      });
+      if (currentScenExample) {
+        const btn = Array.prototype.find.call(
+          ul.querySelectorAll("button.file-name"),
+          function (x) { return x.textContent === currentScenExample; }
+        );
+        if (btn) btn.classList.add("active");
+      }
+    } catch (e) {
+      ul.innerHTML = '<li class="muted" style="padding:12px;">' + esc(e.message) + "</li>";
+    }
+  }
+
   async function selectScenario(name, btnEl) {
     const st = document.getElementById("scen-status");
     if (scenDirty && !confirm("Modifications non enregistrées. Continuer ?")) return;
-    document.querySelectorAll("#scen-files button").forEach(function (b) {
-      b.classList.remove("active");
-    });
+    clearScenSelectionHighlight();
     if (btnEl) btnEl.classList.add("active");
     currentScenFile = name;
+    currentScenExample = null;
     document.getElementById("scen-current").textContent = name;
+    setScenSourceHint(false);
     const editor = document.getElementById("scen-editor");
     editor.disabled = true;
     document.getElementById("scen-save").disabled = true;
@@ -449,6 +571,64 @@
     } catch (e) {
       setStatus(st, e.message, "err");
       editor.value = "";
+    }
+  }
+
+  async function previewScenarioExample(name, btnEl) {
+    const st = document.getElementById("scen-status");
+    if (scenDirty && !confirm("Modifications non enregistrées. Continuer ?")) return;
+    clearScenSelectionHighlight();
+    if (btnEl) btnEl.classList.add("active");
+    currentScenFile = null;
+    currentScenExample = name;
+    document.getElementById("scen-current").textContent = name;
+    setScenSourceHint(true);
+    const editor = document.getElementById("scen-editor");
+    editor.disabled = true;
+    document.getElementById("scen-save").disabled = true;
+    setStatus(st, "Chargement exemple…", "");
+    try {
+      const data = await apiFetch(
+        API_SCEN_EXAMPLES_FILE + "?file=" + encodeURIComponent(name)
+      );
+      editor.value = data.content || "";
+      editor.disabled = false;
+      scenDirty = false;
+      setStatus(st, "", "");
+    } catch (e) {
+      setStatus(st, e.message, "err");
+      editor.value = "";
+    }
+  }
+
+  async function copyScenarioExample(name, overwrite) {
+    const st = document.getElementById("scen-status");
+    const exists = productionScenFiles.indexOf(name) >= 0;
+    if (exists && !overwrite) {
+      if (!confirm('"' + name + '" existe déjà en production. Écraser ?')) return;
+      overwrite = true;
+    }
+    setStatus(st, "Copie…", "");
+    try {
+      const url =
+        API_SCEN_EXAMPLES_COPY +
+        "?file=" +
+        encodeURIComponent(name) +
+        (overwrite ? "&overwrite=true" : "");
+      await apiFetch(url, { method: "POST" });
+      await refreshScenariiPanel();
+      const prodBtn = Array.prototype.find.call(
+        document.querySelectorAll("#scen-files button"),
+        function (x) { return x.textContent === name; }
+      );
+      await selectScenario(name, prodBtn || null);
+      setStatus(st, "Copié en production.", "ok");
+    } catch (e) {
+      if (e.message.indexOf("already exists") >= 0) {
+        copyScenarioExample(name, true);
+        return;
+      }
+      setStatus(st, e.message, "err");
     }
   }
 
@@ -477,7 +657,7 @@
   document.getElementById("scen-editor").addEventListener("input", function () {
     scenDirty = true;
   });
-  document.getElementById("scen-reload-list").addEventListener("click", loadScenariiList);
+  document.getElementById("scen-reload-list").addEventListener("click", refreshScenariiPanel);
   document.getElementById("scen-save").addEventListener("click", saveScenario);
 
   loadFaq();

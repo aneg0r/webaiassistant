@@ -92,3 +92,32 @@ async def put_scenario(file: str, body: ScenarioPutBody) -> JSONResponse:
         return JSONResponse({"ok": True, **out})
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/scenarii/examples/list", dependencies=[Depends(_admin_dep)])
+async def list_scenario_examples() -> JSONResponse:
+    return JSONResponse({"files": backoffice_store.list_scenario_example_files()})
+
+
+@router.get("/scenarii/examples/file", dependencies=[Depends(_admin_dep)])
+async def get_scenario_example(file: str) -> JSONResponse:
+    try:
+        out = backoffice_store.read_scenario_example_file(file)
+        return JSONResponse(out)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
+
+@router.post("/scenarii/examples/copy", dependencies=[Depends(_admin_dep)])
+async def copy_scenario_example(file: str, overwrite: bool = False) -> JSONResponse:
+    try:
+        out = backoffice_store.copy_scenario_from_example(file, overwrite=overwrite)
+        return JSONResponse({"ok": True, **out})
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except FileExistsError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e

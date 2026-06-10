@@ -29,6 +29,7 @@ def backoffice_dirs(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "_FAQ_PATH", bo / "faq.json")
     monkeypatch.setattr(store, "_WIKI_PATH", bo / "wiki.md")
     monkeypatch.setattr(store, "_SCENARII_DIR", scen)
+    monkeypatch.setattr(store, "_SCENARII_EXAMPLE_DIR", tmp_path / "scenarii.example")
     return bo, scen
 
 
@@ -243,6 +244,50 @@ def test_ensure_scenarii_from_example_skips_when_dir_exists_partial(
 
     assert (scen / "a.md").read_text(encoding="utf-8") == "# Local A\n"
     assert not (scen / "b.md").exists()
+
+
+def test_scenario_example_list_and_copy(tmp_path, monkeypatch) -> None:
+    from app import backoffice_store
+
+    bo = tmp_path / "backoffice"
+    scen = bo / "scenarii"
+    scen.mkdir(parents=True)
+    example_dir = tmp_path / "scenarii.example"
+    example_dir.mkdir()
+    (example_dir / "new.md").write_text("# New\n", encoding="utf-8")
+    monkeypatch.setattr(config, "BACKOFFICE_DIR", bo)
+    monkeypatch.setattr(config, "SCENARII_DIR", scen)
+    monkeypatch.setattr(backoffice_store, "_SCENARII_DIR", scen)
+    monkeypatch.setattr(backoffice_store, "_SCENARII_EXAMPLE_DIR", example_dir)
+
+    assert backoffice_store.list_scenario_example_files() == ["new.md"]
+    out = backoffice_store.copy_scenario_from_example("new.md")
+    assert out["file"] == "new.md"
+    assert (scen / "new.md").read_text(encoding="utf-8") == "# New\n"
+    with pytest.raises(FileExistsError):
+        backoffice_store.copy_scenario_from_example("new.md")
+    out = backoffice_store.copy_scenario_from_example("new.md", overwrite=True)
+    assert out["content"] == "# New\n"
+
+
+def test_api_scenario_example_copy(backoffice_dirs, client, tmp_path, monkeypatch) -> None:
+    import app.backoffice_store as store
+
+    example_dir = tmp_path / "scenarii.example"
+    example_dir.mkdir()
+    (example_dir / "from_example.md").write_text("# From example\n", encoding="utf-8")
+    monkeypatch.setattr(store, "_SCENARII_EXAMPLE_DIR", example_dir)
+
+    r = client.get("/backoffice/scenarii/examples/list")
+    assert r.status_code == 200
+    assert "from_example.md" in r.json()["files"]
+
+    r = client.post("/backoffice/scenarii/examples/copy?file=from_example.md")
+    assert r.status_code == 200
+    assert r.json()["content"] == "# From example\n"
+
+    r = client.post("/backoffice/scenarii/examples/copy?file=from_example.md")
+    assert r.status_code == 409
 
 
 def test_api_scenario_roundtrip(backoffice_dirs, client) -> None:

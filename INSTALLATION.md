@@ -156,6 +156,12 @@ Omit `#ixfeedback-widget-root` if you only need the chat. The feedback tab mount
 
 | PUT | `/backoffice/scenarii/file?file=` `{ "content": "…" }` |
 
+| GET | `/backoffice/scenarii/examples/list` |
+
+| GET | `/backoffice/scenarii/examples/file?file=` |
+
+| POST | `/backoffice/scenarii/examples/copy?file=` `&overwrite=true` optional |
+
 
 
 ## Admin security (nginx Basic + `.env` token)
