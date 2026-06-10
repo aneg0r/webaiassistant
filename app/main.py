@@ -186,3 +186,4 @@ async def ensure_dirs():
     if not config.CHAT_SESSION_INDEX_PATH.is_file():
         config.CHAT_SESSION_INDEX_PATH.write_text("{}", encoding="utf-8")
     backoffice_store.ensure_faq_from_example()
+    backoffice_store.ensure_wiki_from_example()

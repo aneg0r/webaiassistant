@@ -121,6 +121,41 @@ def test_ensure_faq_from_example_does_not_overwrite(tmp_path, monkeypatch) -> No
     assert backoffice_store.read_faq() == [{"question": "Existing", "answer": "Keep"}]
 
 
+def test_ensure_wiki_from_example_copies_when_missing(tmp_path, monkeypatch) -> None:
+    from app import backoffice_store
+
+    bo = tmp_path / "backoffice"
+    bo.mkdir()
+    example = tmp_path / "wiki.md.example"
+    example.write_text("# Wiki\n", encoding="utf-8")
+    monkeypatch.setattr(config, "BACKOFFICE_DIR", bo)
+    monkeypatch.setattr(backoffice_store, "_WIKI_PATH", bo / "wiki.md")
+    monkeypatch.setattr(backoffice_store, "_WIKI_EXAMPLE_PATH", example)
+
+    backoffice_store.ensure_wiki_from_example()
+
+    assert (bo / "wiki.md").is_file()
+    assert (bo / "wiki.md").read_text(encoding="utf-8") == "# Wiki\n"
+
+
+def test_ensure_wiki_from_example_does_not_overwrite(tmp_path, monkeypatch) -> None:
+    from app import backoffice_store
+
+    bo = tmp_path / "backoffice"
+    bo.mkdir()
+    wiki_path = bo / "wiki.md"
+    wiki_path.write_text("# Existing\n", encoding="utf-8")
+    example = tmp_path / "wiki.md.example"
+    example.write_text("# New\n", encoding="utf-8")
+    monkeypatch.setattr(config, "BACKOFFICE_DIR", bo)
+    monkeypatch.setattr(backoffice_store, "_WIKI_PATH", wiki_path)
+    monkeypatch.setattr(backoffice_store, "_WIKI_EXAMPLE_PATH", example)
+
+    backoffice_store.ensure_wiki_from_example()
+
+    assert wiki_path.read_text(encoding="utf-8") == "# Existing\n"
+
+
 def test_api_scenario_roundtrip(backoffice_dirs, client) -> None:
     r = client.get("/backoffice/scenarii/list")
     assert r.status_code == 200

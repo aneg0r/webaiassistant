@@ -232,6 +232,8 @@ location ~ ^/(backoffice/|admin/) {
 
 | `backoffice/wiki.md` | Optional long doc (`INJECT_WIKI_IN_PROMPT=true`) |
 
+| `backoffice/wiki.md.example` | Wiki template (auto-copied to `wiki.md` on first startup if missing) |
+
 
 
 Public read-only mount: `/backoffice/faq.json` (config files only; no runtime data).

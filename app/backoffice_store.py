@@ -14,6 +14,8 @@ from app.content import invalidate_faq_cache, invalidate_scenarii_cache
 
 _FAQ_PATH = config.BACKOFFICE_DIR / "faq.json"
 _FAQ_EXAMPLE_PATH = config.PROJECT_ROOT / "backoffice" / "faq.json.example"
+_WIKI_PATH = config.BACKOFFICE_DIR / "wiki.md"
+_WIKI_EXAMPLE_PATH = config.PROJECT_ROOT / "backoffice" / "wiki.md.example"
 _SCENARII_DIR = config.SCENARII_DIR
 
 _SCENARIO_NAME_RE = re.compile(r"^[a-zA-Z0-9._-]+\.md$")
@@ -24,14 +26,22 @@ def _ensure_backoffice_dirs() -> None:
     _SCENARII_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _copy_backoffice_file_from_example(runtime: Path, example: Path) -> None:
+    if runtime.is_file() or not example.is_file():
+        return
+    shutil.copy2(example, runtime)
+
+
 def ensure_faq_from_example() -> None:
     """Copy bundled FAQ template if runtime file is missing."""
     _ensure_backoffice_dirs()
-    if _FAQ_PATH.is_file():
-        return
-    if not _FAQ_EXAMPLE_PATH.is_file():
-        return
-    shutil.copy2(_FAQ_EXAMPLE_PATH, _FAQ_PATH)
+    _copy_backoffice_file_from_example(_FAQ_PATH, _FAQ_EXAMPLE_PATH)
+
+
+def ensure_wiki_from_example() -> None:
+    """Copy bundled wiki template if runtime file is missing."""
+    _ensure_backoffice_dirs()
+    _copy_backoffice_file_from_example(_WIKI_PATH, _WIKI_EXAMPLE_PATH)
 
 
 def validate_faq_payload(data: Any) -> list[dict[str, str]]:

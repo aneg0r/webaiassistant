@@ -1,0 +1,125 @@
+# Product wiki — Connected product
+
+Internal reference document for customer support and the virtual agent.  
+Company: **Entreprise SAS** — B2B and B2C sales.
+
+---
+
+## 1. Company overview
+
+Entreprise SAS designs and sells **connected products** for consumers and businesses.  
+Shipped from France (standard delivery 3 to 5 business days depending on destination).
+
+- **Website**: www.entreprise.example (demo)
+- **Support**: support@entreprise.example — Mon.–Fri. 9 a.m.–6 p.m. (CET)
+- **Phone**: +33 1 84 00 00 00 (main line, callback within 24 h)
+- **Legal warranty**: 2 years (consumer); business terms on quote
+
+---
+
+## 2. Product range (overview)
+
+| Reference | Description | Connectivity | Typical use |
+|-----------|-------------|--------------|-------------|
+| **Standard model** | Compact connected product | Wi‑Fi | Daily use, office, retail |
+
+Models share a **web application** accessible from mobile or browser (**entreprise.example**).
+
+---
+
+## 3. Technical basics (customer guidance)
+
+### Operation
+
+- Product configurable via the app or customer portal.
+- Remote content updates depending on the subscribed plan.
+
+### Power
+
+- Power supply depends on the model (rechargeable battery or mains).
+- For intensive use, prefer continuous power when the product supports it.
+
+### Environment
+
+- Indoor use recommended; avoid moisture and impacts.
+- Operating temperature: range indicated in the product manual.
+- **CE** certification on models sold in the EU.
+
+### Connectivity
+
+- Initial setup guided in the app (first-use assistant).
+- Connection to the customer's Wi‑Fi network; some features may rely on an online service.
+
+---
+
+## 4. Box contents
+
+- 1 product
+- Accessories included depending on model (cable, manual)
+- Quick start guide
+
+*Additional accessories available as options on the website.*
+
+---
+
+## 5. Getting started (summary)
+
+1. Read the quick start guide included in the box.
+2. Install or open the app, then follow the on-screen steps.
+3. Connect the product to Wi‑Fi when prompted.
+
+If setup fails: factory reset (see § Troubleshooting) or contact support.
+
+---
+
+## 6. Orders, delivery, billing
+
+- **B2C**: card/PayPal payment on the website; PDF invoice by email.
+- **B2B**: quote, purchase order, payment net 30 days (approved account).
+- **Parcel tracking**: link sent by email on dispatch (carrier depending on country).
+- **Returns**: 14-day cooling-off period (new, original packaging); RMA required for after-sales — do not return without an RMA number.
+
+---
+
+## 7. Warranty and after-sales
+
+- **Defect under warranty**: repair or exchange depending on availability.
+- **Out of warranty**: normal wear, accidental damage, unauthorized modification → paid quote.
+- **Average after-sales time**: varies by request (indicative 10 to 15 business days after receipt).
+
+Replacement parts are supplied only by **authorized after-sales service**.
+
+---
+
+## 8. Quick troubleshooting
+
+| Symptom | Common cause | Action |
+|---------|--------------|--------|
+| Product not responding | Sleep mode or low battery | Restart; recharge if applicable |
+| No longer connects to network | Router/password change | Reconfigure via the app |
+| App cannot find product | Product offline or poor network | Check Wi‑Fi; move closer to router |
+| Content not up to date | Sync pending | Force sync in the app; restart the product |
+| Persistent issue | Variable cause | Contact support with serial number and symptom description |
+
+**Factory reset**: procedure described in the manual or app — clears network configuration and account link, does not delete cloud data (resync required).
+
+---
+
+## 9. Commercial policy (sample answers)
+
+- **Volume discounts**: from a certain threshold — contact commercial@entreprise.example.
+- **Resellers / integrators**: partner program on request.
+- **Customization**: available on quote depending on volumes and lead times.
+- **Software updates**: deployed regularly (in-app notification when applicable).
+
+---
+
+## 10. Known limitations (roadmap)
+
+- Some advanced configuration options are **planned** in upcoming releases.
+- Compatibility and connectivity: see the product page on the website for model-specific details.
+- Features advertised on the website may vary by firmware version.
+
+---
+
+*Last wiki update: 2026-06-04 — generic demonstration document*

@@ -1,0 +1,26 @@
+[
+  {
+    "question": "Êtes-vous un humain ?",
+    "answer": "Je suis un agent virtuel, mais je peux transférer la conversation à un humain au besoin."
+  },
+  {
+    "question": "Est-ce que le produit est disponible à la vente ?",
+    "answer": "Oui, le produit est disponible à la vente. Vous pouvez commander directement sur le site. Vous pouvez également contacter le service client pour plus d'informations."
+  },
+  {
+    "question": "Quel est le délai de livraison ? Puis-je suivre mon colis ?",
+    "answer": "Le transporteur utilisé est Colissimo avec signature, avec un numéro de suivi. Le délai de livraison est de 3 à 5 jours ouvrés."
+  },
+  {
+    "question": "Quel est le délai de rétractation ?",
+    "answer": "Le délai de rétractation est de 14 jours. Vous pouvez rétracter votre commande dans les 14 jours suivant la réception du produit. Vous pouvez également contacter le service client pour plus d'informations."
+  },
+  {
+    "question": "Le produit est-il difficle à installer ? ",
+    "answer": "Cela est relativement simple. Vous pouvez suivre le guide de démarrage rapide pour installer le produit. Vous pouvez également contacter le service client pour plus d'informations."
+  },
+  {
+    "question": "Avez-vous une app Android ou Apple ? ",
+    "answer": "Non, nous n'avons pas encore d'app sur les stores. Vous pouvez utiliser directement notre site web sur votre mobile. Il s'adaptera à votre écran."
+  }
+]
