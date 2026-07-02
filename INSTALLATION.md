@@ -36,7 +36,7 @@ uvicorn app.main:app --reload --port 7750
 - Minimal embed demo: http://127.0.0.1:7750/example.htm
 
 - Admin: http://127.0.0.1:7750/backoffice/
-- Config editor: http://127.0.0.1:7750/admin/configuration.htm
+- Config editor: http://127.0.0.1:7750/backoffice/configuration.htm
 
 
 
@@ -172,7 +172,7 @@ Three layers work together:
 
 
 
-1. **nginx** — HTTP Basic on `/backoffice/`, `/admin/`, and `/backoffice/*` (recommended). The browser sends `Authorization: Basic` on every request (`credentials: "same-origin"` in the admin UI).
+1. **nginx** — HTTP Basic on `/backoffice/` and `/backoffice/*` (recommended). The browser sends `Authorization: Basic` on every request (`credentials: "same-origin"` in the admin UI).
 
 2. **Application Basic** — `ADMIN_USER` and `ADMIN_PASSWORD` in `.env` (same credentials as nginx, or used without nginx).
 
@@ -180,7 +180,7 @@ Three layers work together:
 
 
 
-| `.env` | API `/backoffice/*` | HTML `/backoffice/`, `/admin/configuration.htm` |
+| `.env` | API `/backoffice/*` | HTML `/backoffice/`, `/backoffice/configuration.htm` |
 
 |--------|----------------------|-----------------------------------------------------|
 
@@ -301,9 +301,3 @@ tests/
 
 
 Legacy `chat/` and `data/` paths are read as fallback if present (one-release migration).
-
-
-
-Legacy API paths `/api/agent/prompt` and `/apitm/*` remain as compatibility aliases.
-
-

@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-from typing import Optional
-
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -15,13 +11,6 @@ from app import config
 from app.auth import require_admin
 from app import backoffice_store
 from app.routes import admin, agent, backoffice_config
-from app.schemas import (
-    ArchiveSessionBody,
-    FeedbackPageBody,
-    GeminiPromptBody,
-    HumanInChargeBody,
-    HumanReplyBody,
-)
 
 PROJECT_ROOT = config.PROJECT_ROOT
 
@@ -83,6 +72,17 @@ async def backoffice_admin_page(request: Request):
     return _admin_page("agent_admin.htm")
 
 
+@app.get("/backoffice/configuration.htm")
+async def backoffice_configuration_page(request: Request):
+    require_admin(request, for_html=True)
+    return _admin_page("configuration.htm")
+
+
+@app.get("/admin/configuration.htm")
+async def admin_configuration_legacy_redirect():
+    return RedirectResponse(url="/backoffice/configuration.htm", status_code=307)
+
+
 @app.get("/agent_admin/")
 async def agent_admin_legacy_redirect():
     return RedirectResponse(url="/backoffice/", status_code=307)
@@ -100,72 +100,6 @@ if backoffice_dir.is_dir():
         StaticFiles(directory=str(backoffice_dir)),
         name="backoffice",
     )
-
-
-@app.get("/admin/configuration.htm")
-async def admin_configuration_page(request: Request):
-    require_admin(request, for_html=True)
-    return _admin_page("configuration.htm")
-
-
-@app.get("/backoffice/configuration.htm")
-async def backoffice_configuration_redirect():
-    return RedirectResponse(url="/admin/configuration.htm", status_code=307)
-
-
-@app.get("/api/agent/prompt")
-async def compat_get_api_agent_prompt(
-    sessionId: Optional[str] = Query(None),
-    file: Optional[str] = Query(None),
-):
-    return await agent.get_agent_prompt(sessionId=sessionId, file=file)
-
-
-@app.post("/api/agent/prompt")
-async def compat_post_api_agent_prompt(request: Request, body: GeminiPromptBody):
-    return await agent.post_agent_prompt(request, body)
-
-
-@app.get("/apitm/agent/prompt")
-async def compat_get_apitm_agent_prompt(
-    sessionId: Optional[str] = Query(None),
-    file: Optional[str] = Query(None),
-):
-    return await agent.get_agent_prompt(sessionId=sessionId, file=file)
-
-
-@app.post("/apitm/agent/prompt")
-async def compat_post_apitm_agent_prompt(request: Request, body: GeminiPromptBody):
-    return await agent.post_agent_prompt(request, body)
-
-
-@app.post("/api/agent/feedback-page")
-async def compat_post_api_feedback_page(body: FeedbackPageBody):
-    return await agent.post_feedback_page(body)
-
-
-@app.get("/apitm/chat/sessions/list")
-async def compat_sessions_list(request: Request):
-    admin.require_admin(request)
-    return await admin.sessions_list()
-
-
-@app.post("/apitm/chat/sessions/archive")
-async def compat_sessions_archive(request: Request, body: ArchiveSessionBody):
-    admin.require_admin(request)
-    return await admin.sessions_archive(body)
-
-
-@app.post("/api/human")
-async def compat_api_human(request: Request, body: HumanReplyBody):
-    admin.require_admin(request)
-    return await admin.human_reply(body)
-
-
-@app.post("/api/human-in-charge")
-async def compat_api_human_in_charge(request: Request, body: HumanInChargeBody):
-    admin.require_admin(request)
-    return await admin.human_in_charge(body)
 
 
 @app.on_event("startup")
