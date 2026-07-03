@@ -489,6 +489,10 @@
           <label for="auth-pass">Mot de passe</label>
           <input type="password" id="auth-pass" name="password" autocomplete="current-password" required />
         </div>
+        <div class="auth-field">
+          <label for="auth-token">Token API (ADMIN_TOKEN)</label>
+          <input type="password" id="auth-token" name="admin-token" autocomplete="off" placeholder="Requis si configuré côté serveur" />
+        </div>
         <button type="submit" class="primary" style="width:100%;margin-top:4px;padding:11px 16px;font-size:15px;">Se connecter</button>
       </form>
     </div>
@@ -617,7 +621,7 @@
     async function apiFetch(url, opts) {
       const r = await _baseFetch(url, opts);
       if (r.status === 401) {
-        showAuthOverlay("Identifiants incorrects, veuillez vous reconnecter.");
+        showAuthOverlay("Identifiants ou token API incorrects, veuillez vous reconnecter.");
         throw new Error("Unauthorized");
       }
       return r;
@@ -1266,8 +1270,10 @@
       e.preventDefault();
       const user = document.getElementById("auth-user").value.trim();
       const pass = document.getElementById("auth-pass").value;
+      const token = document.getElementById("auth-token").value.trim();
       if (!user) return;
       AdminAuth.setBasic(user, pass);
+      if (token) AdminAuth.setToken(token);
       hideAuthOverlay();
       initPage();
     });
