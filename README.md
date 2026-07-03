@@ -1,14 +1,14 @@
-# Website_Agent
+# Web AI Assistant
 
-Website Agent is an open-source customer-facing agent widget designed for websites.
+Web AI Assistant is an open-source customer-facing agent widget designed for websites.
 
-It enables visitors to interact with either AI agents or human operators through a simple chat interface. Unlike traditional live-chat tools, Website Agent focuses on actionable workflows: agents can answer questions, guide users, collect information, and trigger business actions.
+It enables visitors to interact with either AI agents or human operators through a simple chat interface. Unlike traditional live-chat tools, Web AI Assistant focuses on actionable workflows: agents can answer questions, guide users, collect information, and trigger business actions.
 
 It aims to be between a traditional live chat widget and a complex enterprise agent platform: simple enough to deploy in minutes, powerful enough to automate real customer-facing tasks.
 
 Visit http://webaiassistant.fr/ for realtime demo (in French).
 
-## Why Website Agent? Typical use cases
+## Why Web AI Assistant? Typical use cases
 
 This agent can:
 
@@ -20,9 +20,9 @@ This agent can:
 
 Agent behavior is defined using simple Markdown task files (`__task__.md`), making it easy to configure and maintain without complex tooling.
 
-## What RapidAgent Is Not
+## What Web AI Assistant Is Not
 
-RapidAgent intentionally focuses on external interactions.
+Web AI Assistant intentionally focuses on external interactions.
 
 It is **not**:
 
