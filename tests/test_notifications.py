@@ -39,7 +39,7 @@ class _FakeResponse:
 
 
 class _FakeClient:
-    posts: list[tuple[str, dict]] = []
+    gets: list[tuple[str, dict]] = []
 
     def __init__(self, timeout=None):
         self.timeout = timeout
@@ -50,8 +50,8 @@ class _FakeClient:
     def __exit__(self, *args):
         return False
 
-    def post(self, url, json=None):
-        _FakeClient.posts.append((url, json))
+    def get(self, url, params=None):
+        _FakeClient.gets.append((url, params or {}))
         return _FakeResponse()
 
 
@@ -154,11 +154,11 @@ def test_events_agent_offer_and_closed_session_do_not_alert():
     assert closed == []
 
 
-def test_empty_urls_do_not_post(monkeypatch):
+def test_empty_urls_do_not_get(monkeypatch):
     monkeypatch.setattr(config, "NOTIFY_URL_CHAT_CONNECTED", "")
     monkeypatch.setattr(config, "NOTIFY_URL_HUMAN_REQUESTED", "")
     monkeypatch.setattr(notifications.threading, "Thread", _ImmediateThread)
-    _FakeClient.posts = []
+    _FakeClient.gets = []
     monkeypatch.setattr(notifications.httpx, "Client", _FakeClient)
 
     notifier = HttpNotifier()
@@ -169,14 +169,14 @@ def test_empty_urls_do_not_post(monkeypatch):
         session_id="s",
         handoff_signal="human_requires_human",
     )
-    assert _FakeClient.posts == []
+    assert _FakeClient.gets == []
 
 
 def test_each_url_receives_only_its_event(monkeypatch):
     monkeypatch.setattr(config, "NOTIFY_URL_CHAT_CONNECTED", "http://alerts.test/connected")
     monkeypatch.setattr(config, "NOTIFY_URL_HUMAN_REQUESTED", "http://alerts.test/human")
     monkeypatch.setattr(notifications.threading, "Thread", _ImmediateThread)
-    _FakeClient.posts = []
+    _FakeClient.gets = []
     monkeypatch.setattr(notifications.httpx, "Client", _FakeClient)
 
     notifier = HttpNotifier()
@@ -195,19 +195,19 @@ def test_each_url_receives_only_its_event(monkeypatch):
         handoff_signal="human_requires_human",
     )
 
-    assert [url for url, _ in _FakeClient.posts] == [
+    assert [url for url, _ in _FakeClient.gets] == [
         "http://alerts.test/connected",
         "http://alerts.test/human",
     ]
-    connected = _FakeClient.posts[0][1]
+    connected = _FakeClient.gets[0][1]
     assert connected["event"] == EVENT_CHAT_CONNECTED
     assert connected["session_id"] == "sess-1"
     assert connected["client_ip"] == "10.0.0.1"
     assert connected["content"] == "x" * 500
-    assert connected["handoff_signal"] is None
+    assert "handoff_signal" not in connected
     assert connected["at"].endswith("Z")
 
-    human = _FakeClient.posts[1][1]
+    human = _FakeClient.gets[1][1]
     assert human["event"] == EVENT_HUMAN_REQUESTED
     assert human["handoff_signal"] == "human_requires_human"
 
@@ -215,14 +215,14 @@ def test_each_url_receives_only_its_event(monkeypatch):
 def test_prise_en_charge_calls_both_urls(monkeypatch):
     monkeypatch.setattr(config, "NOTIFY_URL_REMOVE_CONNECTED", "http://alerts.test/remove-connected")
     monkeypatch.setattr(config, "NOTIFY_URL_REMOVE_HUMAIN", "http://alerts.test/remove-humain")
-    _FakeClient.posts = []
+    _FakeClient.gets = []
     monkeypatch.setattr(notifications.httpx, "Client", _FakeClient)
 
     result = notifications.send_prise_en_charge()
 
     assert result["ok"] is True
     assert result["skipped"] == []
-    posted = {url: body["event"] for url, body in _FakeClient.posts}
+    posted = {url: body["event"] for url, body in _FakeClient.gets}
     assert posted == {
         "http://alerts.test/remove-connected": "remove_connected",
         "http://alerts.test/remove-humain": "remove_humain",
@@ -232,7 +232,7 @@ def test_prise_en_charge_calls_both_urls(monkeypatch):
 def test_prise_en_charge_skips_empty_urls(monkeypatch):
     monkeypatch.setattr(config, "NOTIFY_URL_REMOVE_CONNECTED", "")
     monkeypatch.setattr(config, "NOTIFY_URL_REMOVE_HUMAIN", "")
-    _FakeClient.posts = []
+    _FakeClient.gets = []
     monkeypatch.setattr(notifications.httpx, "Client", _FakeClient)
 
     result = notifications.send_prise_en_charge()
@@ -242,7 +242,7 @@ def test_prise_en_charge_skips_empty_urls(monkeypatch):
         "sent": [],
         "skipped": ["remove_connected", "remove_humain"],
     }
-    assert _FakeClient.posts == []
+    assert _FakeClient.gets == []
 
 
 def test_route_prise_en_charge(client, monkeypatch):
@@ -268,7 +268,7 @@ def test_route_prise_en_charge(client, monkeypatch):
     assert [item["event"] for item in body["sent"]] == ["remove_connected", "remove_humain"]
 
 
-def test_post_error_is_swallowed(monkeypatch):
+def test_get_error_is_swallowed(monkeypatch):
     class Boom:
         def __init__(self, timeout=None):
             pass
@@ -279,11 +279,14 @@ def test_post_error_is_swallowed(monkeypatch):
         def __exit__(self, *args):
             return False
 
-        def post(self, url, json=None):
+        def get(self, url, params=None):
             raise httpx.ConnectError("down")
 
     monkeypatch.setattr(notifications.httpx, "Client", Boom)
-    notifications._post_json("http://alerts.test/connected", {"event": EVENT_CHAT_CONNECTED})
+    notifications._get_notification(
+        "http://alerts.test/connected",
+        {"event": EVENT_CHAT_CONNECTED},
+    )
 
 
 def test_route_notifies_once_per_event(sessions, client, recorded, quiet_agent):

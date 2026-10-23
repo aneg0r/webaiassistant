@@ -15,6 +15,8 @@ log = logging.getLogger(__name__)
 
 EVENT_CHAT_CONNECTED = "chat_connected"
 EVENT_HUMAN_REQUESTED = "human_requested"
+EVENT_REMOVE_CONNECTED = "remove_connected"
+EVENT_REMOVE_HUMAIN = "remove_humain"
 HUMAN_REQUEST_SIGNAL = "human_requires_human"
 
 CONTENT_MAX_CHARS = 500
@@ -88,7 +90,7 @@ class NoopNotifier:
 
 
 class HttpNotifier:
-    """POST one JSON body per event. Missing URL means that event is skipped."""
+    """GET one URL per event, with the alert fields as query parameters."""
 
     def url_for(self, step: str) -> str:
         if step == EVENT_CHAT_CONNECTED:
@@ -110,26 +112,25 @@ class HttpNotifier:
         url = (self.url_for(step) or "").strip()
         if not url:
             return
-        payload = {
-            "event": step,
-            "session_id": (session_id or "").strip() or None,
-            "client_ip": (client_ip or "").strip() or None,
-            "content": _truncate(content),
-            "handoff_signal": handoff_signal,
-            "at": _utc_now_iso(),
-        }
+        payload = _payload(
+            step,
+            content=content,
+            client_ip=client_ip,
+            session_id=session_id,
+            handoff_signal=handoff_signal,
+        )
         threading.Thread(
-            target=_post_json,
+            target=_get_notification,
             args=(url, payload),
             daemon=True,
             name="notify-http",
         ).start()
 
 
-def _post_json(url: str, payload: dict[str, Any]) -> None:
+def _get_notification(url: str, payload: dict[str, Any]) -> None:
     try:
         with httpx.Client(timeout=TIMEOUT_SECONDS) as client:
-            client.post(url, json=payload)
+            client.get(url, params=_query_params(payload))
     except Exception:
         log.exception("HTTP notification failed event=%s", payload.get("event"))
 
@@ -156,6 +157,80 @@ def schedule_notification(
         session_id=session_id,
         **kwargs,
     )
+
+
+def _prise_en_charge_jobs() -> list[tuple[str, str]]:
+    return [
+        (EVENT_REMOVE_CONNECTED, (config.NOTIFY_URL_REMOVE_CONNECTED or "").strip()),
+        (EVENT_REMOVE_HUMAIN, (config.NOTIFY_URL_REMOVE_HUMAIN or "").strip()),
+    ]
+
+
+def _payload(event: str, *, content: Optional[str] = None, client_ip: Optional[str] = None, session_id: Optional[str] = None, handoff_signal: Optional[str] = None) -> dict[str, Any]:
+    return {
+        "event": event,
+        "session_id": (session_id or "").strip() or None,
+        "client_ip": (client_ip or "").strip() or None,
+        "content": _truncate(content),
+        "handoff_signal": handoff_signal,
+        "at": _utc_now_iso(),
+    }
+
+
+def _query_params(payload: dict[str, Any]) -> dict[str, str]:
+    params: dict[str, str] = {}
+    for key, value in payload.items():
+        if value is None:
+            continue
+        params[key] = str(value)
+    return params
+
+
+def _get_result(event: str, url: str) -> dict[str, Any]:
+    payload = _payload(event)
+    try:
+        with httpx.Client(timeout=TIMEOUT_SECONDS) as client:
+            response = client.get(url, params=_query_params(payload))
+        return {
+            "event": event,
+            "ok": response.is_success,
+            "status_code": response.status_code,
+        }
+    except Exception as exc:
+        log.exception("HTTP notification failed event=%s", event)
+        return {"event": event, "ok": False, "error": str(exc)}
+
+
+def send_prise_en_charge() -> dict[str, Any]:
+    """GET the two operator clear-alert URLs at the same time."""
+    jobs = _prise_en_charge_jobs()
+    active = [(event, url) for event, url in jobs if url]
+    skipped = [event for event, url in jobs if not url]
+    if not active:
+        return {"ok": True, "sent": [], "skipped": skipped}
+
+    results: list[dict[str, Any]] = []
+    lock = threading.Lock()
+
+    def run(event: str, url: str) -> None:
+        item = _get_result(event, url)
+        with lock:
+            results.append(item)
+
+    threads = [
+        threading.Thread(target=run, args=(event, url), daemon=True, name="notify-http")
+        for event, url in active
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=TIMEOUT_SECONDS + 1.0)
+
+    by_event = {item["event"]: item for item in results}
+    sent: list[dict[str, Any]] = []
+    for event, _url in active:
+        sent.append(by_event.get(event) or {"event": event, "ok": False, "error": "timeout"})
+    return {"ok": all(item.get("ok") for item in sent), "sent": sent, "skipped": skipped}
 
 
 def notify_turn(

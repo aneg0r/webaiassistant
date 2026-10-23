@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import shutil
 import time
@@ -14,6 +15,7 @@ from fastapi.responses import JSONResponse
 from app import config
 from app.admin_records import read_record, list_records
 from app.auth import require_admin
+from app.notifications import send_prise_en_charge
 from app.presence import snapshot as presence_snapshot
 from app.schemas import ArchiveSessionBody, HumanInChargeBody, HumanReplyBody
 from app.transcripts import (
@@ -79,6 +81,21 @@ async def sessions_archive(body: ArchiveSessionBody) -> JSONResponse:
             "archived_path": f"var/sessions/archived/{base_name}",
         }
     )
+
+
+@router.post("/notify/prise-en-charge", dependencies=[Depends(_admin_dep)])
+async def notify_prise_en_charge() -> JSONResponse:
+    """Call both clear-alert URLs together (operator takeover)."""
+    result = await asyncio.to_thread(send_prise_en_charge)
+    if not result.get("ok"):
+        failed = [
+            str(item.get("event"))
+            for item in result.get("sent") or []
+            if not item.get("ok")
+        ]
+        result["detail"] = "Échec : " + ", ".join(failed)
+    status = 200 if result.get("ok") else 502
+    return JSONResponse(result, status_code=status)
 
 
 @router.post("/human", dependencies=[Depends(_admin_dep)])

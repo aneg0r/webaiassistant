@@ -109,6 +109,15 @@
       border-collapse: collapse;
       font-size: 13px;
     }
+    table.sessions {
+      min-width: 0;
+      table-layout: fixed;
+    }
+    table.sessions th {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     th, td {
       text-align: left;
       padding: 10px 12px;
@@ -139,8 +148,13 @@
       word-break: break-all;
     }
     .last-message-cell {
-      min-width: 280px;
-      max-width: 520px;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .last-message-cell a.file-link {
+      display: block;
+      min-width: 0;
+      overflow: hidden;
     }
     .last-author {
       font-size: 11px;
@@ -154,6 +168,17 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    td.session-cell {
+      overflow: hidden;
+    }
+    td.session-cell .session-id {
+      display: block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: normal;
     }
     a.file-link {
       color: #8ab4f8;
@@ -738,7 +763,9 @@
       if (!sessions.length) {
         return '<p class="muted">Aucun fichier de session trouvé (JSON de transcription dans <code>var/sessions/</code>).</p>';
       }
-      let html = '<div class="table-wrap"><table><thead><tr>';
+      let html = '<div class="table-wrap"><table class="sessions"><colgroup>';
+      html += '<col style="width:8%"><col style="width:12%"><col style="width:14%"><col style="width:23%"><col style="width:11%"><col style="width:16%"><col style="width:12%"><col style="width:4%">';
+      html += '</colgroup><thead><tr>';
       html += "<th>Signaux</th><th>Etat</th><th>En ligne</th><th>Dernier message</th><th>Session</th><th>Mise à jour</th><th>IP</th><th>Archiver</th>";
       html += "</tr></thead><tbody>";
       for (const s of sessions) {
@@ -768,7 +795,8 @@
         html += "<td>" + stateCell + "</td>";
         html += "<td>" + onlineCell + lastPoll + "</td>";
         html += '<td class="last-message-cell"><a class="file-link" href="' + esc(hrefConv) + '" title="' + esc(lastContentRaw || "") + '"><div class="last-author">' + esc(author) + '</div><div class="last-content">' + esc(lastContent) + "</div></a></td>";
-        html += '<td class="mono">' + esc(s.sessionId) + "</td>";
+        const sessionId = s.sessionId != null ? String(s.sessionId) : "";
+        html += '<td class="session-cell"><span class="mono session-id" title="' + esc(sessionId) + '">' + esc(sessionId || "—") + "</span></td>";
         html += "<td>" + esc(s.updated_at || s.started_at) + "</td>";
         html += '<td class="mono">' + esc(s.client_ip) + "</td>";
         html += '<td><button type="button" class="archive-btn" data-archive-file="' + esc(s.file) + '" title="' + esc(archiveTitle) + '" aria-label="' + esc(archiveTitle) + '">🗑️</button></td>';

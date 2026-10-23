@@ -100,6 +100,8 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
 # Optional HTTP alerts. Empty URL disables that event only.
 NOTIFY_URL_CHAT_CONNECTED = os.environ.get("NOTIFY_URL_CHAT_CONNECTED", "").strip()
 NOTIFY_URL_HUMAN_REQUESTED = os.environ.get("NOTIFY_URL_HUMAN_REQUESTED", "").strip()
+NOTIFY_URL_REMOVE_CONNECTED = os.environ.get("NOTIFY_URL_REMOVE_CONNECTED", "").strip()
+NOTIFY_URL_REMOVE_HUMAIN = os.environ.get("NOTIFY_URL_REMOVE_HUMAIN", "").strip()
 
 CHAT_CLOSED_SESSION_PROMPT = "Closed session"
 CHAT_PRESENCE_ONLINE_WINDOW_SECONDS = 20.0
