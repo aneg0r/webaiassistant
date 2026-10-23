@@ -66,6 +66,18 @@
       align-items: center;
       gap: 8px;
     }
+    .toolbar-end {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .prise-status {
+      font-size: 13px;
+      color: #bdc1c6;
+    }
+    .prise-status.ok-text { color: #81c995; }
+    .prise-status.err-text { color: #f28b82; }
     .dot {
       width: 10px;
       height: 10px;
@@ -538,6 +550,10 @@
             <span><span class="dot dot-orange" aria-hidden="true"></span> agent_demande_humain</span>
             <span><span class="dot dot-green" aria-hidden="true"></span> human_in_charge</span>
           </div>
+          <div class="toolbar-end">
+            <span id="prise-en-charge-status" class="prise-status" role="status"></span>
+            <button type="button" class="primary" id="btn-prise-en-charge">Prise en charge</button>
+          </div>
         </div>
         <div id="msg"></div>
         <div id="content" class="loading">Chargement…</div>
@@ -635,6 +651,7 @@
     const API_POLL = "/agent/prompt";
     const API_HUMAN = API_BASE + "/human";
     const API_HUMAN_IN_CHARGE = API_BASE + "/human-in-charge";
+    const API_PRISE_EN_CHARGE = API_BASE + "/notify/prise-en-charge";
     const STORAGE_PRENOM = "agent_admin_prenom";
     const TAB_IDS = ["chat", "actions", "feedback", "surveys"];
     const TAB_LABELS = {
@@ -1169,6 +1186,39 @@
     }
 
     document.getElementById("btn-refresh").addEventListener("click", loadList);
+    document.getElementById("btn-prise-en-charge").addEventListener("click", sendPriseEnCharge);
+
+    async function sendPriseEnCharge() {
+      const btn = document.getElementById("btn-prise-en-charge");
+      const status = document.getElementById("prise-en-charge-status");
+      btn.disabled = true;
+      status.className = "prise-status";
+      status.textContent = "Envoi…";
+      try {
+        const r = await apiFetch(API_PRISE_EN_CHARGE, {
+          method: "POST",
+          credentials: "same-origin",
+        });
+        const data = await r.json().catch(function () { return {}; });
+        if (!r.ok) {
+          const detail = data && data.detail != null ? data.detail : "Erreur " + r.status;
+          throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+        }
+        const sent = Array.isArray(data.sent) ? data.sent : [];
+        if (sent.length === 0) {
+          status.className = "prise-status err-text";
+          status.textContent = "Aucune URL configurée.";
+          return;
+        }
+        status.className = "prise-status ok-text";
+        status.textContent = "Notification envoyée.";
+      } catch (e) {
+        status.className = "prise-status err-text";
+        status.textContent = e && e.message ? e.message : String(e);
+      } finally {
+        btn.disabled = false;
+      }
+    }
     document.querySelectorAll("#admin-tabs .tab").forEach(function (btn) {
       btn.addEventListener("click", function () {
         switchTab(btn.getAttribute("data-tab") || "chat");

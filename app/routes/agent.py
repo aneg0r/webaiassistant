@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 
 from app import actions, config
 from app.agent import agent_chat_turn
+from app.notifications import notify_turn
 from app.presence import touch
 from app.schemas import FeedbackPageBody, GeminiPromptBody
 from app.side_effects import persist_turn_side_effects
@@ -92,14 +93,13 @@ async def post_agent_prompt(request: Request, body: GeminiPromptBody) -> JSONRes
     if not prompt_stripped:
         raise HTTPException(status_code=400, detail="empty prompt")
 
-    if sid:
-        transcript = read_transcript_for_session(sid)
-        if isinstance(transcript, dict) and bool(transcript.get("human_in_charge", False)):
-            try:
-                append_user_message_to_transcript(_client_ip(request), body.session_id, body.prompt)
-            except Exception:
-                traceback.print_exc()
-            return JSONResponse({"reply": "", "human_in_charge": True})
+    transcript = read_transcript_for_session(sid) if sid else None
+    if sid and isinstance(transcript, dict) and bool(transcript.get("human_in_charge", False)):
+        try:
+            append_user_message_to_transcript(_client_ip(request), body.session_id, body.prompt)
+        except Exception:
+            traceback.print_exc()
+        return JSONResponse({"reply": "", "human_in_charge": True})
 
     if prompt_stripped == config.CHAT_CLOSED_SESSION_PROMPT:
         if sid:
@@ -146,6 +146,13 @@ async def post_agent_prompt(request: Request, body: GeminiPromptBody) -> JSONRes
         raise HTTPException(status_code=500, detail=detail) from e
 
     reply = result.reply
+    notify_turn(
+        session_id=sid or None,
+        client_ip=_client_ip(request),
+        content=prompt_stripped,
+        handoff_signal=result.handoff_signal,
+        existing_transcript=transcript if isinstance(transcript, dict) else None,
+    )
     try:
         append_chat_transcript_json(
             _client_ip(request),

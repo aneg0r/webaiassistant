@@ -71,6 +71,7 @@ Omit `#ixfeedback-widget-root` if you only need the chat. The feedback tab mount
 | GET | `/backoffice/records/file?source=&file=` |
 | POST | `/backoffice/human` |
 | POST | `/backoffice/human-in-charge` |
+| POST | `/backoffice/notify/prise-en-charge` | Calls `NOTIFY_URL_REMOVE_CONNECTED` and `NOTIFY_URL_REMOVE_HUMAIN` together |
 | GET | `/backoffice/faq` |
 | PUT | `/backoffice/faq` `{ "entries": [{ "question", "answer" }] }` |
 | GET | `/backoffice/wiki` |
@@ -125,6 +126,16 @@ location ~ ^/(backoffice/|admin/) {
 | `backoffice/wiki.md.example` | Wiki template (auto-copied to `wiki.md` on first startup if missing) |
 
 Public read-only mount: `/backoffice/faq.json` (config files only; no runtime data).
+
+## HTTP alerts
+
+Optional POST when a visitor sends the first message of a session, and when they ask for a human (`human_requires_human`). Set the URLs in `.env` (see `.env.example`). Leave a variable empty to disable that event.
+
+- `NOTIFY_URL_CHAT_CONNECTED` — first message of a new session
+- `NOTIFY_URL_HUMAN_REQUESTED` — visitor asks for a human
+- `NOTIFY_URL_REMOVE_CONNECTED` and `NOTIFY_URL_REMOVE_HUMAIN` — operator button **Prise en charge** in the admin session list; both URLs are called together
+
+The JSON body includes `event`, `session_id`, `client_ip`, `content`, `handoff_signal`, and `at`. Delivery is asynchronous and does not block the chat reply. Page polls and the agent merely offering a human (`agent_demande_humain`) do not send an alert.
 
 ## Tests
 

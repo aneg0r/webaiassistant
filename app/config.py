@@ -97,6 +97,10 @@ ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
 ADMIN_USER = os.environ.get("ADMIN_USER", "").strip()
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
 
+# Optional HTTP alerts. Empty URL disables that event only.
+NOTIFY_URL_CHAT_CONNECTED = os.environ.get("NOTIFY_URL_CHAT_CONNECTED", "").strip()
+NOTIFY_URL_HUMAN_REQUESTED = os.environ.get("NOTIFY_URL_HUMAN_REQUESTED", "").strip()
+
 CHAT_CLOSED_SESSION_PROMPT = "Closed session"
 CHAT_PRESENCE_ONLINE_WINDOW_SECONDS = 20.0
 CHAT_PRESENCE_TTL_SECONDS = 600.0
